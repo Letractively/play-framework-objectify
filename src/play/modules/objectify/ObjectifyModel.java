@@ -5,96 +5,70 @@ import com.googlecode.objectify.Key;
 import java.lang.reflect.Field;
 
 /**
+ * The base model for all managed entities, with some convenience methods to simplify application code. Of
+ * particular importance is only subclasses of <code>ObjectifyModel</code> is handled by {@link play.modules.objectify.ObjectifyBinder}.
+ *
  * @author David Cheong
  * @since 22/04/2010
+ * @see play.modules.objectify.ObjectifyBinder
  */
 @SuppressWarnings({"unchecked"})
 public abstract class ObjectifyModel {
 
-//    public <T extends ObjectifyModel> T get(Key<? extends T> key) throws EntityNotFoundException {
-//        return ObjectifyService.get(key);
-//    }
-//
-//    public <T extends ObjectifyModel> T get(Long id) throws EntityNotFoundException {
-//        return (T) ObjectifyService.get(getClass(), id);
-//    }
-//
-//    public <T extends ObjectifyModel> T get(String name) throws EntityNotFoundException {
-//        return (T) ObjectifyService.get(getClass(), name);
-//    }
-//
-//    public <T extends ObjectifyModel> Map<Key<T>, T> getByKeys(Iterable<? extends Key<? extends T>> keys) {
-//        return ObjectifyService.get(keys);
-//    }
-//
-//    public <S, T extends ObjectifyModel> Map<S, T> getByIdsOrNames(Iterable<S> idsOrNames) {
-//        return (Map<S, T>) ObjectifyService.get(getClass(), idsOrNames);
-//    }
-//
-//    public <T extends ObjectifyModel> T find(Key<? extends T> key, boolean newIfNull) {
-//        return ObjectifyService.find(key, newIfNull);
-//    }
-//
-//    public <T extends ObjectifyModel> T find(Long id, boolean newIfNull) {
-//        return (T) ObjectifyService.find(getClass(), id, newIfNull);
-//    }
-//
-//    public <T extends ObjectifyModel> T find(String name, boolean newIfNull) {
-//        return (T) ObjectifyService.find(getClass(), name, newIfNull);
-//    }
-//
-//    public <T extends ObjectifyModel> Key<T> save() {
-//        return put();
-//    }
-//
-//    public <T extends ObjectifyModel> Key<T> put() {
-//        return (Key<T>) ObjectifyService.put(this);
-//    }
-//
-//    public void delete() {
-//        ObjectifyService.delete(this);
-//    }
-//
-//    public <T extends ObjectifyModel> Query<T> query() {
-//        return (Query<T>) ObjectifyService.query(this.getClass());
-//    }
-//
-//    public Objectify begin() {
-//        return ObjectifyService.begin();
-//    }
-//
-//    public Objectify beginTxn() {
-//        return ObjectifyService.beginTxn();
-//    }
-//
-//    public void commit() {
-//        ObjectifyService.commit();
-//    }
-//
-//    public void rollback() {
-//        ObjectifyService.rollback();
-//    }
-
+    /**
+     * Returns the {@link Key} associated with this entity instance.
+     *
+     * @param <T> the type
+     * @return the key
+     */
     public <T extends ObjectifyModel> Key<T> getKey() {
         return ObjectifyService.getKey(this);
     }
 
+    /**
+     * An alias of {@link #getKey()}.
+     *
+     * @param <T> the type
+     * @return the key
+     */
     public <T extends ObjectifyModel> Key<T> key() {
         return ObjectifyService.key(this);
     }
 
+    /**
+     * Returns the string representation of the {@link Key} associated with this entity instance.
+     *
+     * @return the key string
+     */
     public String getKeyStr() {
         return ObjectifyService.getKeyStr(this);
     }
 
+    /**
+     * An alias of {@link #getKeyStr()}.
+     *
+     * @return the key string
+     */
     public String keyStr() {
         return ObjectifyService.keyStr(this);
     }
 
+    /**
+     * An alias of {@link #getKeyStr()}.
+     *
+     * @return the key string
+     */
     public String str() {
         return ObjectifyService.keyStr(this);
     }
 
+    /**
+     * Refreshes an entity instance given string identifier.
+     *
+     * @param str the string identifier
+     * @param <R> the type
+     * @return the refreshed instance
+     */
     public <R> R fetch(String str) {
 
         String rawKind;
@@ -124,9 +98,16 @@ public abstract class ObjectifyModel {
 
     }
 
+    /**
+     * Refreshes an entity instance given a Long, String or {@link Key}.
+     *
+     * @param idOrKeyProperty id or key
+     * @param rawKind the kind
+     * @param <R> the type
+     * @return the refreshed instance
+     */
     public <R> R fetch(String idOrKeyProperty, String rawKind) {
 
-        rawKind = capitalize(rawKind);
         Class<?> kind = getKind(rawKind);
         Object idOrKey = getFieldValue(this, idOrKeyProperty);
 
@@ -148,16 +129,29 @@ public abstract class ObjectifyModel {
 
     }
 
+    /**
+     * Returns the class for a given input string, prepending it with "models." if required.
+     *
+     * @param rawKind the raw kind
+     * @return the kind as a class
+     */
     private Class<?> getKind(String rawKind) {
         if (rawKind.startsWith("models.")) {
             return ObjectifyService.loadClass(rawKind);
         }
         else {
-            return ObjectifyService.loadClass("models." + rawKind);
+            return ObjectifyService.loadClass("models." + capitalize(rawKind));
         }
     }
 
-    protected static Object getFieldValue(Object object, String fieldName) {
+    /**
+     * Returns the value of a given field in an object via direct access.
+     *
+     * @param object the object
+     * @param fieldName the field name
+     * @return the field value
+     */
+    private static Object getFieldValue(Object object, String fieldName) {
         try {
             Field field = object.getClass().getField(fieldName);
             return field.get(object);
@@ -167,6 +161,12 @@ public abstract class ObjectifyModel {
         }
     }
 
+    /**
+     * Capitalize the first character of a given string.
+     *
+     * @param str the input string
+     * @return the output string
+     */
     private String capitalize(String str) {
         int strLen;
         if (str == null || (strLen = str.length()) == 0) {

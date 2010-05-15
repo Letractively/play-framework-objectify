@@ -5,6 +5,8 @@ import play.modules.objectify.ObjectifyService;
 import play.templates.JavaExtensions;
 
 /**
+ * Java extensions in templates.
+ *
  * @author David Cheong
  * @since 23/04/2010
  */

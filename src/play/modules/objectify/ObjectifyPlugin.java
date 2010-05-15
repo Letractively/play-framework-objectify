@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * The {@link PlayPlugin} to support Objectify on the Google App Engine/J platform. This plugin reads the "objectify.models"
+ * property in application.conf to configure Objectify and invokes a binder ({@link ObjectifyBinder} or subclass identified
+ * by "objectify.binder") to handle mapping of HTTP parameters.
+ *
  * @author David Cheong
  * @since 20/04/2010
  */
@@ -19,6 +23,9 @@ public class ObjectifyPlugin extends PlayPlugin {
 
     protected static Boolean prod;
 
+    /**
+     * Reads "objectify.models" for the list of Objectify managed entities.
+     */
     protected void setup() {
         String models = Play.configuration.getProperty("objectify.models");
         if (models != null) {
@@ -29,6 +36,11 @@ public class ObjectifyPlugin extends PlayPlugin {
         }
     }
 
+    /**
+     * Checks if the application is running on the production Google App Engine/J platform or the dev server.
+     *
+     * @return true if production, false otherwise
+     */
     protected boolean isProd() {
         if (prod == null) {
             List<PlayPlugin> plugins = Play.plugins;
@@ -45,6 +57,9 @@ public class ObjectifyPlugin extends PlayPlugin {
         }
     }
 
+    /**
+     * Setup the environment if production.
+     */
     @Override
     public void onApplicationStart() {
         if (isProd()) {
@@ -52,6 +67,16 @@ public class ObjectifyPlugin extends PlayPlugin {
         }
     }
 
+    /**
+     * Invoked when binding HTTP parameters to Java instances. The actual binding is handled by
+     * {@link ObjectifyBinder} or a subclass identified by "objectify.binder" in application.conf.
+     *
+     * @param name the param name
+     * @param clazz the target class which should be ObjectifyModel
+     * @param type the type
+     * @param params the params map
+     * @return the bound instance or null
+     */
     @Override
     public Object bind(String name, Class clazz, Type type, Map<String, String[]> params) {
         String binderClassName = Play.configuration.getProperty("objectify.binder", ObjectifyBinder.class.getName());
@@ -66,6 +91,9 @@ public class ObjectifyPlugin extends PlayPlugin {
         }
     }
 
+    /**
+     * Setup the environment if not production.
+     */
     @Override
     public void beforeInvocation() {
         if (!isProd()) {
@@ -73,11 +101,19 @@ public class ObjectifyPlugin extends PlayPlugin {
         }
     }
 
+    /**
+     * Commits all opened transactions.
+     */
     @Override
     public void afterInvocation() {
         ObjectifyService.commitAll();
     }
 
+    /**
+     * Exposes the {@link ObjectifyService} to templates under two keys, "Datastore" and "ofy".
+     *
+     * @param actionMethod the action method
+     */
     @Override
     public void beforeActionInvocation(Method actionMethod) {
         Scope.RenderArgs renderArgs = Scope.RenderArgs.current();
@@ -90,6 +126,11 @@ public class ObjectifyPlugin extends PlayPlugin {
     public void afterActionInvocation() {
     }
 
+    /**
+     * Rolls back all opened transactions
+     *
+     * @param e the error thrown
+     */
     @Override
     public void onInvocationException(Throwable e) {
         ObjectifyService.rollbackAll();
