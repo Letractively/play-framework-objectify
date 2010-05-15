@@ -1,0 +1,18 @@
+# You can specialize this file for each language.
+# For exemple, for french create a messages.fr file
+#
+validation.required=%s is required
+validation.invalid=%s is invalid
+
+city.label=Label
+
+flight.pilot=Pilot
+flight.origin=Origin
+flight.destination=Destination
+flight.stopovers=Stopovers
+flight.price=Price
+flight.passengers=Passengers
+
+passenger.firstName=First Name
+passenger.lastName=Last Name
+passenger.flight=Flight

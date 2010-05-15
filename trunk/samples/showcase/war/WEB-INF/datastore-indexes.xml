@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<datastore-indexes autoGenerate="true">
+
+    <datastore-index kind="Flight" ancestor="false" source="auto">
+        <property name="owner" direction="asc"/>
+        <property name="pilot" direction="asc"/>
+    </datastore-index>
+
+    <datastore-index kind="Passenger" ancestor="false" source="auto">
+        <property name="owner" direction="asc"/>
+        <property name="lastName" direction="asc"/>
+    </datastore-index>
+
+    <datastore-index kind="Passenger" ancestor="true" source="auto">
+        <property name="lastName" direction="asc"/>
+    </datastore-index>
+
+</datastore-indexes>
