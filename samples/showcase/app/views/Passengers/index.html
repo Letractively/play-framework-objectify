@@ -1,0 +1,35 @@
+#{extends 'main.html' /}
+
+#{if flight}
+#{set title:'Passengers travelling : ' + flight?.displayString/}
+#{/if}
+
+#{if !flight}
+#{set title:'All Passengers'/}
+#{/if}
+
+<table class="data">
+    <tr>
+        <th width="50">Id</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Flight</th>
+        <th>&nbsp;</th>
+        <th>&nbsp;</th>
+    </tr>
+    #{list passengers, as:'passenger'}
+    <tr>
+        <td>${passenger.id}</td>
+        <td>${passenger.firstName}</td>
+        <td>${passenger.lastName}</td>
+        <td>
+            ${passenger.flight.fetch().displayString}<br/>
+        </td>
+        <td class="edit"><a href="@{edit(passenger.flight.id, passenger.id)}">Edit</a></td>
+        <td class="delete">#{delete @delete(passenger.flight.id, passenger.id), id:'delete_'+passenger.id}Delete#{/delete}</td>
+    </tr>
+    #{/list}
+</table>
+
+<br/>
+<a href="@{create(flight?.id)}">Add</a>

@@ -1,0 +1,61 @@
+#{extends 'main.html' /}
+#{set title:'Passenger' /}
+
+#{if passenger.id}
+    <b>${passenger.flight.fetch().displayString}</b><br/><br/>
+#{/if}
+
+<form method="post">
+
+    #{authenticityToken /}
+    
+    <input type="hidden" name="passenger.id" value="${passenger.str()}"/>
+
+    <div class="fields">
+
+        <table>
+
+            #{field 'passenger.firstName'}
+                <tr class="field ${field.errorClass}">
+                    <td class="label"><label for="firstName">First Name:</label></td>
+                    <td class="field"><input id="firstName" type="text" name="${field.name}" value="${passenger.firstName}" class="large"/></td>
+                    <td>#{ifError field.name}<span class="error">${field.error}</span>#{/ifError}</td>
+                </tr>
+            #{/field}
+
+            #{field 'passenger.lastName'}
+            <tr class="field ${field.errorClass}">
+                <td class="label"><label for="lastName">Last Name:</label></td>
+                <td class="field"><input id="lastName" type="text" name="${field.name}" value="${passenger.lastName}" class="large"/></td>
+                <td>#{ifError field.name}<span class="error">${field.error}</span>#{/ifError}</td>
+            </tr>
+            #{/field}
+
+            #{if !passenger.id}
+                #{field 'passenger.flight'}
+                    <tr class="field ${field.errorClass}">
+                        <td class="label"><label for="flight">Flight:</label></td>
+                        <td class="field">
+                            <select id="flight" name="${field.name}">
+                                <option value="" ${passenger.flight == null ? 'selected' : ''}>Not specified</option>
+                                #{list flights, as:'flight'}
+                                <option value="${flight.str()}" ${passenger.flight?.id == flight.id ? 'selected' : ''}>${flight.displayString}</option>
+                                #{/list}
+                            </select>
+                        </td>
+                        <td>#{ifError field.name}<span class="error">${field.error}</span>#{/ifError}</td>
+                    </tr>
+                #{/field}
+            #{/if}
+
+        </table>
+
+    </div>
+
+    <div>
+        <input type="submit" value="Save passenger" />
+        #{if passenger.flight}<a href="@{index(passenger.flight.id)}">Cancel</a>#{/if}
+        #{if !passenger.flight}<a href="@{index()}">Cancel</a>#{/if}
+    </div>
+
+</form>
