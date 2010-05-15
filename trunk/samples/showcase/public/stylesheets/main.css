@@ -30,10 +30,12 @@ table.data td.edit { width:50px; text-align:right; }
 table.data td.delete { width:40px; text-align:right; }
 
 div.wrap { width:950px; margin:0 auto; }
-div#nav { background:#cedce5; color:#333; text-shadow:1px 1px #fff; overflow:auto; }
+div#nav { background:#cedce5; color:#333; font-weight:bold; text-shadow:1px 1px #fff; overflow:hidden; }
 div#nav h1 { float:left; font-size:1.5em; padding:15px 0; }
 div#nav ul { float:right; margin:20px 0 0 0; padding:0; }
-div#nav li { float:left; list-style:none; margin:0 0 0 20px; padding:0 0 0 20px; border-left:0px solid #ccc; }
+div#nav li { float:left; list-style:none; margin:0 0 0 20px; padding:0 0 0 20px; }
+div#nav a { font-weight:normal; }
+div#nav a:hover { color:#333; text-decoration:none; }
 div#banner { background:#306493; color:#fff; text-shadow:1px 1px #333; }
 div#banner h1 { font-size:2.5em; margin:0; padding:15px 0; }
 div#content { background:#fff; padding:30px 0; }
@@ -48,5 +50,5 @@ div#errors ul { display:block; margin:0; padding:0; }
 div#errors li { display:block; margin:5px 0 5px 0; padding:0; }
 div#footer { border-top:1px solid #d0e8fb; color:#333; padding:20px 0 40px 0; }
 div#footer ul { float:right; margin:0; padding:0; }
-div#footer li { float:left; list-style:none; margin:0 0 0 20px; padding:0 0 0 20px; border-left:0px solid #ccc; }
+div#footer li { float:left; list-style:none; margin:0 0 0 20px; padding:0 0 0 20px; }
 
