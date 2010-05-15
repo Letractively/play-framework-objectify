@@ -14,11 +14,28 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 /**
+ * A simple binder which has a single entry point method {@link #bind(String, Class, java.lang.reflect.Type, java.util.Map)}
+ * which is invoked by {@link ObjectifyPlugin#bind(String, Class, java.lang.reflect.Type, java.util.Map)} to handling binding.
+ * Applications wishing to provide custom binding logic may subclass this and provide a reference via the "objectify.binder"
+ * property in application.conf.
+ *
  * @author David Cheong
  * @since 29/04/2010
+ * @see play.modules.objectify.ObjectifyPlugin
+ * @see play.modules.objectify.ObjectifyModel
  */
 public class ObjectifyBinder {
 
+    /**
+     * Invoked when binding HTTP parameters to {@link ObjectifyModel} instances.
+     *
+     * @param name the param name
+     * @param clazz the target class which should be ObjectifyModel
+     * @param type the type
+     * @param params the params map
+     * @return the bound instance or null
+     */
+    @SuppressWarnings({"unchecked", "UnusedDeclaration"})
     public Object bind(String name, Class clazz, Type type, Map<String, String[]> params) {
 
         if (ObjectifyModel.class.isAssignableFrom(clazz)) {
@@ -46,6 +63,17 @@ public class ObjectifyBinder {
 
     }
 
+    /**
+     * Finds a {@link ObjectifyModel} instance given the entity class, the id as a raw string and
+     * the id type. If a {@link Key} cannot be parsed or otherwise resolved properly, this method
+     * returns null.
+     *
+     * @param clazz the entity class
+     * @param rawId the id as a raw string
+     * @param idType the id type
+     * @param <T> the entity type
+     * @return the instance or null
+     */
     public <T extends ObjectifyModel> T find(Class<T> clazz, String rawId, Class idType) {
         Key<T> key = null;
         if (isNumeric(rawId)) {
@@ -70,13 +98,31 @@ public class ObjectifyBinder {
         return instance;
     }
 
-    /** @noinspection unchecked*/
+    /**
+     * Instantiates a new {@link ObjectifyModel} instance and bind the supplied parameters where appropriate.
+     *
+     * @param clazz the entity class
+     * @param name the param name
+     * @param params the params map
+     * @param <T> the entity type
+     * @return the bound instance
+     */
+    @SuppressWarnings({"unchecked"})
     public <T extends ObjectifyModel> T create(Class clazz, String name, Map<String, String[]> params) {
         T instance = (T) ObjectifyService.instantiate(clazz);
         return edit(instance, name, params);
     }
 
-    /** @noinspection ConstantConditions,unchecked */
+    /**
+     * Binds the given entity instance with the supplied parameters.
+     *
+     * @param instance the entity instance
+     * @param name the param name
+     * @param params the params map
+     * @param <T> the entity type
+     * @return the bound instance
+     */
+    @SuppressWarnings({"unchecked"})
     public <T> T edit(T instance, String name, Map<String, String[]> params) {
 
         try {
@@ -123,7 +169,7 @@ public class ObjectifyBinder {
                         Class fieldManyRawType = getCollectionFieldRawType(field);
                         if (fieldManyRawType != null) {
                             if (Key.class.isAssignableFrom(fieldManyRawType)) {
-                                Collection collection = newCollection(fieldPath, field);
+                                Collection collection = newCollection(field, fieldPath);
                                 for (String rawId : fieldValues) {
                                     Key key = ObjectifyService.getKey(rawId);
                                     collection.add(key);
@@ -134,7 +180,7 @@ public class ObjectifyBinder {
                             }
                             else if (embedded) {
                                 int i = 0;
-                                Collection collection = newCollection(fieldPath, field);
+                                Collection collection = newCollection(field, fieldPath);
                                 Map<String, String[]> paramsNested;
                                 while (true) {
                                     String fieldPathNested = fieldPath + "[" + i + "]";
@@ -153,7 +199,7 @@ public class ObjectifyBinder {
                                 bw.set(fieldName, instance, collectionOrArray);
                             }
                             else if (isSimpleType(fieldManyRawType)) {
-                                Collection collection = newCollection(fieldPath, field);
+                                Collection collection = newCollection(field, fieldPath);
                                 for (String fieldValue : fieldValues) {
                                     Object convertedFieldValue = Binder.directBind(fieldValue, fieldManyRawType);
                                     collection.add(convertedFieldValue);
@@ -190,7 +236,15 @@ public class ObjectifyBinder {
 
     }
 
-    public static Collection newCollection(String fieldPath, Field field) {
+    /**
+     * Creates a new {@link Collection} for a given {@link Field}. This method only supports {@link List},
+     * {@link Set} and native Java arrays.
+     *
+     * @param field the field
+     * @param fieldPath the field path
+     * @return the new Collection
+     */
+    public static Collection newCollection(Field field, String fieldPath) {
         Class<?> type = field.getType();
         if (List.class.isAssignableFrom(type) || type.isArray()) {
             return new ArrayList();
@@ -203,7 +257,14 @@ public class ObjectifyBinder {
         }
     }
 
-    /** @noinspection unchecked*/
+    /**
+     * Converts a given {@link Collection} to a native Java array if mandated by the field type.
+     *
+     * @param fieldType the field type
+     * @param rawType the raw type when creating the array
+     * @param collection the source Collection
+     * @return the source Collection or the converted array of raw types
+     */
     public static Object convertToArrayIfRequired(Class fieldType, Class rawType, Collection collection) {
         if (fieldType.isArray()) {
             Object[] array = (Object[]) Array.newInstance(rawType, collection.size());
@@ -214,6 +275,13 @@ public class ObjectifyBinder {
         }
     }
 
+    /**
+     * Obtains the collection or array raw type for a given field which is a native Java array
+     * or a generic {@link Collection}.
+     *
+     * @param field the field
+     * @return the raw type or null if the input is invalid
+     */
     public static Class getCollectionFieldRawType(Field field) {
         if (field.getType().isArray()) {
             return field.getType().getComponentType();
@@ -231,6 +299,14 @@ public class ObjectifyBinder {
         return null;
     }
 
+    /**
+     * Creates a {@link Map} containing a subset of parameters matching the given key prefix
+     * from the supplied parameters.
+     *
+     * @param params the params map
+     * @param keyPrefix the key prefix
+     * @return the map containing matching params
+     */
     public static Map<String, String[]> getParamsByKeyPrefix(Map<String, String[]> params, String keyPrefix) {
         Map<String, String[]> newParams = new HashMap<String, String[]>();
         Set<Map.Entry<String, String[]>> entries = params.entrySet();
@@ -244,24 +320,36 @@ public class ObjectifyBinder {
         return newParams;
     }
 
-    public static Class findKeyType(Class c) {
+    /**
+     * Obtains the key type given an entity class containing a field suitably annotated with {@link Id}.
+     *
+     * @param clazz the entity class
+     * @return the key type
+     */
+    public static Class findKeyType(Class clazz) {
         try {
-            while (!c.equals(Object.class)) {
-                for (Field field : c.getDeclaredFields()) {
+            while (!clazz.equals(Object.class)) {
+                for (Field field : clazz.getDeclaredFields()) {
                     if (field.isAnnotationPresent(Id.class)) {
                         field.setAccessible(true);
                         return field.getType();
                     }
                 }
-                c = c.getSuperclass();
+                clazz = clazz.getSuperclass();
             }
         }
         catch (Exception e) {
-            throw new UnexpectedException("Error while determining the @Id for an object of type: " + c);
+            throw new UnexpectedException("Error while determining the @Id for an object of type: " + clazz);
         }
         return null;
     }
 
+    /**
+     * Returns true if the input string is non-null and contains only numeric characters.
+     *
+     * @param str the input string
+     * @return true if numeric, false otherwise
+     */
     public static boolean isNumeric(String str) {
         if (str == null) {
             return false;
@@ -275,6 +363,12 @@ public class ObjectifyBinder {
         return true;
     }
 
+    /**
+     * Returns true if the type supplied is "simple".
+     *
+     * @param type the type
+     * @return true if simple, false otherwise
+     */
     public boolean isSimpleType(Class type) {
         return String.class.equals(type) ||
                 Number.class.isAssignableFrom(type) ||

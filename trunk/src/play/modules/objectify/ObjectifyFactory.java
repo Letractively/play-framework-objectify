@@ -5,20 +5,43 @@ import com.googlecode.objectify.Key;
 import play.Play;
 
 /**
+ * A convenient subclass of {@link com.googlecode.objectify.ObjectifyFactory} with better handling of
+ * keys and working with Play's dynamic classloaders.
+ *
  * @author David Cheong
  * @since 21/04/2010
  */
 public class ObjectifyFactory extends com.googlecode.objectify.ObjectifyFactory {
 
+    /**
+     * Returns the kind for a given class name.
+     *
+     * @param className the class name
+     * @return the kidn
+     */
     @Override
     public String getKind(String className) {
         return super.getKind(loadClass(className));
     }
 
+    /**
+     * Loads a class using Play's dynamic classloader.
+     *
+     * @param clazz the class
+     * @param <T> the type
+     * @return the loaded class
+     */
     public static <T> Class<T> loadClass(Class<T> clazz) {
         return loadClass(clazz.getName());
     }
 
+    /**
+     * Loads a class using Play's dynamic classloader.
+     *
+     * @param name the class name
+     * @param <T> the type
+     * @return the loaded class
+     */
     public static <T> Class<T> loadClass(String name) {
         try {
             return (Class<T>) Play.classloader.loadClass(name);
@@ -28,6 +51,15 @@ public class ObjectifyFactory extends com.googlecode.objectify.ObjectifyFactory 
         }
     }
 
+    /**
+     * Returns a {@link Key} given an input which is a String, <code>Key</code>,
+     * {@link com.google.appengine.api.datastore.Key}, a native Java array of entities or
+     * an entity instance.
+     *
+     * @param keyOrEntity the input which can be of several types
+     * @param <T> the key type
+     * @return the key instance
+     */
     public <T> Key<T> getKey(Object keyOrEntity) {
         if (keyOrEntity instanceof String) {
             return rawKeyToTypedKey(KeyFactory.stringToKey((String) keyOrEntity));
@@ -38,6 +70,15 @@ public class ObjectifyFactory extends com.googlecode.objectify.ObjectifyFactory 
         return super.getKey(keyOrEntity);
     }
 
+    /**
+     * Returns a key from a pair of objects representing the entity hierarchy which satisfies the
+     * first part of the pair being a kind and the second part of the pair being a
+     * {@link String} or {@link Long}.
+     *
+     * @param pairs the pairs
+     * @param <T> the key type
+     * @return the key
+     */
     @SuppressWarnings({"unchecked"})
     public <T> Key<T> getKey(Object... pairs) {
         Key<?> current = null;
@@ -69,6 +110,12 @@ public class ObjectifyFactory extends com.googlecode.objectify.ObjectifyFactory 
         return (Key<T>) current;
     }
 
+    /**
+     * Returns a string representation of a key given an input key or entity.
+     *
+     * @param keyOrEntity the key or entity
+     * @return the key as a string
+     */
     public String getKeyStr(Object keyOrEntity) {
         try {
             return keyOrEntity == null ? null : KeyFactory.keyToString(getRawKey(keyOrEntity));
@@ -78,6 +125,12 @@ public class ObjectifyFactory extends com.googlecode.objectify.ObjectifyFactory 
         }
     }
 
+    /**
+     * Returns the raw {@link com.google.appengine.api.datastore.Key} given an input key or entity.
+     *
+     * @param keyOrEntity the key or entity
+     * @return the raw key
+     */
     public com.google.appengine.api.datastore.Key getRawKey(Object keyOrEntity) {
         if (keyOrEntity instanceof String) {
             return KeyFactory.stringToKey((String) keyOrEntity);

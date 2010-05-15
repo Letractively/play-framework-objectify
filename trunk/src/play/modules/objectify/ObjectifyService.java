@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * A simple service to handle all Objectify operations, working in tandem with {@link ObjectifyFactory}. Whilst this
+ * class has some similarities to the the service provided by Objectify, it does not use it in any way.
+ *
  * @author David Cheong
  * @since 20/04/2010
  */
