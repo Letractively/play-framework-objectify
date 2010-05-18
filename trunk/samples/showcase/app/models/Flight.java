@@ -2,8 +2,8 @@ package models;
 
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Query;
+import controllers.Application;
 import play.data.validation.Required;
-import play.modules.gae.GAE;
 import play.modules.objectify.Datastore;
 import play.modules.objectify.ObjectifyModel;
 
@@ -35,18 +35,18 @@ public class Flight extends ObjectifyModel {
     }
 
     public static Flight findById(Long id, boolean newIfNull) {
-        return Datastore.find(Flight.class, id, false);
+        return Datastore.find(Flight.class, id, newIfNull);
     }
 
     public static Query<Flight> findAllByOwner() {
         return Datastore
                 .query(Flight.class)
-                .filter("owner", GAE.getUser().getEmail())
+                .filter("owner", Application.getUserEmail())
                 .order("pilot");
     }
 
     public Key<Flight> save() {
-        owner = GAE.getUser().getEmail();
+        owner = Application.getUserEmail();
         return Datastore.put(this);
     }
 
