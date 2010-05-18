@@ -4,8 +4,8 @@ import com.google.appengine.api.datastore.QueryResultIterable;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Query;
 import com.googlecode.objectify.annotation.Parent;
+import controllers.Application;
 import play.data.validation.Required;
-import play.modules.gae.GAE;
 import play.modules.objectify.Datastore;
 import play.modules.objectify.ObjectifyModel;
 
@@ -31,7 +31,7 @@ public class Passenger extends ObjectifyModel {
     public static Query<Passenger> findAllByOwner() {
         return Datastore
                 .query(Passenger.class)
-                .filter("owner", GAE.getUser().getEmail())
+                .filter("owner", Application.getUserEmail())
                 .order("lastName");
     }
 
@@ -47,7 +47,7 @@ public class Passenger extends ObjectifyModel {
     }
 
     public Key<Passenger> save() {
-        owner = GAE.getUser().getEmail();
+        owner = Application.getUserEmail();
         return Datastore.put(this);
     }
 
