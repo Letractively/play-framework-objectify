@@ -6,6 +6,7 @@ import play.exceptions.UnexpectedException;
 import play.modules.gae.GAEPlugin;
 import play.mvc.Scope;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.Map;
 /**
  * The {@link PlayPlugin} to support Objectify on the Google App Engine/J platform. This plugin reads the "objectify.models"
  * property in application.conf to configure Objectify and invokes a binder ({@link ObjectifyBinder} or subclass identified
- * by "objectify.binder") to handle mapping of HTTP parameters.
+ * by "objectify.binder" to handle mapping of HTTP parameters.
  *
  * @author David Cheong
  * @since 20/04/2010
@@ -74,17 +75,19 @@ public class ObjectifyPlugin extends PlayPlugin {
      * @param name the param name
      * @param clazz the target class which should be ObjectifyModel
      * @param type the type
+     * @param annotations the annotations array
      * @param params the params map
      * @return the bound instance or null
      */
     @Override
-    public Object bind(String name, Class clazz, Type type, Map<String, String[]> params) {
+    @SuppressWarnings({"unchecked"})
+    public Object bind(String name, Class clazz, Type type, Annotation[] annotations, Map<String, String[]> params) {
         String binderClassName = Play.configuration.getProperty("objectify.binder", ObjectifyBinder.class.getName());
         try {
             Class<? extends ObjectifyBinder> binderClass = (Class<? extends ObjectifyBinder>) Play.classloader.loadClass(binderClassName);
             ObjectifyBinder binder = binderClass.newInstance();
             Object result = binder.bind(name, clazz, type, params);
-            return result == null ? super.bind(name, clazz, type, params) : result;
+            return result == null ? super.bind(name, clazz, type, annotations, params) : result;
         }
         catch (Exception e) {
             throw new UnexpectedException("Unable to bind via binder: " + binderClassName + "," + e.getMessage(), e);
