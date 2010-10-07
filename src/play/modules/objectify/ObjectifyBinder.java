@@ -15,8 +15,8 @@ import java.util.*;
 
 /**
  * A simple binder which has a single entry point method {@link #bind(String, Class, java.lang.reflect.Type, java.util.Map)}
- * which is invoked by {@link ObjectifyPlugin#bind(String, Class, java.lang.reflect.Type, java.util.Map)} to handling binding.
- * Applications wishing to provide custom binding logic may subclass this and provide a reference via the "objectify.binder"
+ * which is invoked by {@link ObjectifyPlugin#bind(String, Class, java.lang.reflect.Type, java.lang.annotation.Annotation[], java.util.Map)}
+ * to handling binding. Applications wishing to provide custom binding logic may subclass this and provide a reference via the "objectify.binder"
  * property in application.conf.
  *
  * @author David Cheong
@@ -122,7 +122,7 @@ public class ObjectifyBinder {
      * @param <T> the entity type
      * @return the bound instance
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({"unchecked", "ConstantConditions"})
     public <T> T edit(T instance, String name, Map<String, String[]> params) {
 
         try {
@@ -201,7 +201,13 @@ public class ObjectifyBinder {
                             else if (isSimpleType(fieldManyRawType)) {
                                 Collection collection = newCollection(field, fieldPath);
                                 for (String fieldValue : fieldValues) {
-                                    Object convertedFieldValue = Binder.directBind(fieldValue, fieldManyRawType);
+                                    Object convertedFieldValue;
+                                    if (fieldManyRawType.isEnum()) {
+                                        convertedFieldValue = getEnumValue(fieldValue, fieldManyRawType);
+                                    }
+                                    else {
+                                        convertedFieldValue = Binder.directBind(fieldValue, fieldManyRawType);
+                                    }
                                     collection.add(convertedFieldValue);
                                 }
                                 Object collectionOrArray = convertToArrayIfRequired(fieldType, fieldManyRawType, collection);
@@ -225,7 +231,7 @@ public class ObjectifyBinder {
 
             }
 
-            bw.bind(name, instance.getClass(), params, "", instance);
+            bw.bind(name, instance.getClass(), params, "", instance, null);
 
             return instance;
 
@@ -258,6 +264,17 @@ public class ObjectifyBinder {
     }
 
     /**
+     * Obtains the value of a given enum given its String name.
+     *
+     * @param value the value
+     * @param clazz the enum class
+     * @return the enum instance
+     */
+    public static <T extends Enum<T>> T getEnumValue(String value, Class<T> clazz) {
+        return Enum.valueOf(clazz, value);
+    }
+
+    /**
      * Converts a given {@link Collection} to a native Java array if mandated by the field type.
      *
      * @param fieldType the field type
@@ -265,6 +282,7 @@ public class ObjectifyBinder {
      * @param collection the source Collection
      * @return the source Collection or the converted array of raw types
      */
+    @SuppressWarnings({"unchecked"})
     public static Object convertToArrayIfRequired(Class fieldType, Class rawType, Collection collection) {
         if (fieldType.isArray()) {
             Object[] array = (Object[]) Array.newInstance(rawType, collection.size());
