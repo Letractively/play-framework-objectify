@@ -41,7 +41,7 @@ public class Flight extends ObjectifyModel {
     public static Query<Flight> findAllByOwner() {
         return Datastore
                 .query(Flight.class)
-                .filter("owner", Application.getUserEmail())
+                .filter("owner", Application.getUserEmail ())
                 .order("pilot");
     }
 
