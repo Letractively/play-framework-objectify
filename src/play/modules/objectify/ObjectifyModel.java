@@ -1,6 +1,7 @@
 package play.modules.objectify;
 
 import com.googlecode.objectify.Key;
+import play.db.Model;
 
 import java.lang.reflect.Field;
 
@@ -12,8 +13,8 @@ import java.lang.reflect.Field;
  * @since 22/04/2010
  * @see play.modules.objectify.ObjectifyBinder
  */
-@SuppressWarnings({"unchecked"})
-public abstract class ObjectifyModel {
+@SuppressWarnings({"unchecked", "UnusedDeclaration"})
+public abstract class ObjectifyModel implements Model {
 
     /**
      * Returns the {@link Key} associated with this entity instance.
@@ -127,6 +128,18 @@ public abstract class ObjectifyModel {
             return null;
         }
 
+    }
+
+    public void _save() {
+        Datastore.put(this);
+    }
+
+    public void _delete() {
+        Datastore.delete(this);
+    }
+
+    public Object _key() {
+        return getKeyStr();
     }
 
     /**

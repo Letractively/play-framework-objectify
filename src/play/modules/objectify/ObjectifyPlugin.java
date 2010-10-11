@@ -2,11 +2,13 @@ package play.modules.objectify;
 
 import play.Play;
 import play.PlayPlugin;
+import play.db.Model;
 import play.exceptions.UnexpectedException;
 import play.modules.gae.GAEPlugin;
 import play.mvc.Scope;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -141,6 +143,18 @@ public class ObjectifyPlugin extends PlayPlugin {
 
     @Override
     public void invocationFinally() {
+    }
+
+    public Model.Factory modelFactory(Class<? extends Model> modelClass) {
+        try {
+            String factoryClassName = Play.configuration.getProperty("objectify.modelFactory", ObjectifyModelFactory.class.getName());
+            Class<?> factoryClass = Play.classloader.loadClass(factoryClassName);
+            Constructor<?> constructor = factoryClass.getConstructors()[0];
+            return (Model.Factory) constructor.newInstance(modelClass);
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
