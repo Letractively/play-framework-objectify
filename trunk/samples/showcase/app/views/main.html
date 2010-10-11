@@ -21,6 +21,7 @@
                     <li><a href="@{Application.index}">Home</a></li>
                     <li><a href="@{Flights.index}">Flights</a></li>
                     <li><a href="@{Passengers.index}">Passengers</a></li>
+                    <li><a href="@{CRUD.index}">Admin</a></li>
                     #{if !user}<li><a href="@{Application.login}">Login</a></li>#{/if}
                     #{if user}<li><a href="@{Application.logout}">Logout</a></li>#{/if}
                     #{if user}<li>${user}</li>#{/if}
