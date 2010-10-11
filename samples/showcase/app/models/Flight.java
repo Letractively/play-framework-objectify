@@ -8,6 +8,7 @@ import play.modules.objectify.Datastore;
 import play.modules.objectify.ObjectifyModel;
 
 import javax.persistence.Embedded;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.util.List;
 

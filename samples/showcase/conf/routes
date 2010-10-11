@@ -25,9 +25,19 @@ POST    /flights/{<[0-9]+>flightId}/passengers/create                       Pass
 POST    /flights/{<[0-9]+>flightId}/passengers/{<[0-9]+>id}                 Passengers.save
 DELETE  /flights/{<[0-9]+>flightId}/passengers/{<[0-9]+>id}                 Passengers.delete
 
+# Admin (crud)
+
+*       /admin                                                              module:crud
+
+# Security
+
 GET     /login                                                              Application.login
 GET     /logout                                                             Application.logout                   
 
+# Static
+
 GET     /public/                                                            staticDir:public
+
+# Catch all
 
 *       /{controller}/{action}                                              {controller}.{action}

@@ -17,7 +17,7 @@
 
             #{field 'passenger.firstName'}
                 <tr class="field ${field.errorClass}">
-                    <td class="label"><label for="firstName">First Name:</label></td>
+                    <td class="label"><label for="firstName">&{'passenger.firstName'}:</label></td>
                     <td class="field"><input id="firstName" type="text" name="${field.name}" value="${passenger.firstName}" class="large"/></td>
                     <td>#{ifError field.name}<span class="error">${field.error}</span>#{/ifError}</td>
                 </tr>
@@ -25,7 +25,7 @@
 
             #{field 'passenger.lastName'}
             <tr class="field ${field.errorClass}">
-                <td class="label"><label for="lastName">Last Name:</label></td>
+                <td class="label"><label for="lastName">&{'passenger.lastName'}:</label></td>
                 <td class="field"><input id="lastName" type="text" name="${field.name}" value="${passenger.lastName}" class="large"/></td>
                 <td>#{ifError field.name}<span class="error">${field.error}</span>#{/ifError}</td>
             </tr>
@@ -34,10 +34,10 @@
             #{if !passenger.id}
                 #{field 'passenger.flight'}
                     <tr class="field ${field.errorClass}">
-                        <td class="label"><label for="flight">Flight:</label></td>
+                        <td class="label"><label for="flight">&{'passenger.flight'}:</label></td>
                         <td class="field">
                             <select id="flight" name="${field.name}">
-                                <option value="" ${passenger.flight == null ? 'selected' : ''}>Not specified</option>
+                                <option value="" ${passenger.flight == null ? 'selected' : ''}>&{'notSpecified'}</option>
                                 #{list flights, as:'flight'}
                                 <option value="${flight.str()}" ${passenger.flight?.id == flight.id ? 'selected' : ''}>${flight.displayString}</option>
                                 #{/list}
@@ -53,9 +53,9 @@
     </div>
 
     <div>
-        <input type="submit" value="Save passenger" />
-        #{if passenger.flight}<a href="@{index(passenger.flight.id)}">Cancel</a>#{/if}
-        #{if !passenger.flight}<a href="@{index()}">Cancel</a>#{/if}
+        <input type="submit" value="&{'passenger.save'}" />
+        #{if passenger.flight}<a href="@{index(passenger.flight.id)}">&{'cancel'}</a>#{/if}
+        #{if !passenger.flight}<a href="@{index()}">&{'cancel'}</a>#{/if}
     </div>
 
 </form>

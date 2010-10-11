@@ -2,18 +2,50 @@
 
 <datastore-indexes autoGenerate="true">
 
-    <datastore-index kind="Flight" ancestor="false" source="auto">
-        <property name="owner" direction="asc"/>
-        <property name="pilot" direction="asc"/>
-    </datastore-index>
+  <datastore-index kind="Flight" ancestor="false" source="auto">
+    <property name="owner" direction="asc"/>
+    <property name="pilot" direction="asc"/>
+  </datastore-index>
 
-    <datastore-index kind="Passenger" ancestor="false" source="auto">
-        <property name="owner" direction="asc"/>
-        <property name="lastName" direction="asc"/>
-    </datastore-index>
+  <datastore-index kind="Passenger" ancestor="false" source="auto">
+    <property name="owner" direction="asc"/>
+    <property name="lastName" direction="asc"/>
+  </datastore-index>
 
-    <datastore-index kind="Passenger" ancestor="true" source="auto">
-        <property name="lastName" direction="asc"/>
-    </datastore-index>
+  <datastore-index kind="Passenger" ancestor="true" source="auto">
+    <property name="lastName" direction="asc"/>
+  </datastore-index>
+
+  <datastore-index kind="Weather" ancestor="false" source="auto">
+    <property name="id" direction="asc"/>
+  </datastore-index>
+
+  <datastore-index kind="Weather" ancestor="false" source="auto">
+    <property name="id" direction="desc"/>
+  </datastore-index>
+
+  <datastore-index kind="Weather" ancestor="false" source="auto">
+    <property name="description" direction="asc"/>
+  </datastore-index>
+
+  <datastore-index kind="Weather" ancestor="false" source="auto">
+    <property name="description" direction="desc"/>
+  </datastore-index>
+
+  <datastore-index kind="Weather" ancestor="false" source="auto">
+    <property name="temperature" direction="asc"/>
+  </datastore-index>
+
+  <datastore-index kind="Weather" ancestor="false" source="auto">
+    <property name="temperature" direction="desc"/>
+  </datastore-index>
+
+  <datastore-index kind="Weather" ancestor="false" source="auto">
+    <property name="city" direction="asc"/>
+  </datastore-index>
+
+  <datastore-index kind="Weather" ancestor="false" source="auto">
+    <property name="city" direction="desc"/>
+  </datastore-index>
 
 </datastore-indexes>
