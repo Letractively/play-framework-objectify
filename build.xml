@@ -12,9 +12,11 @@
         </fileset>
         <fileset dir="lib">
             <include name="*.jar"/>
+            <exclude name="play-objectify.jar"/>
         </fileset>
         <fileset dir="${play.path}/modules/gae-1.0.3/lib">
             <include name="*.jar"/>
+            <exclude name="datanucleus-enhancer-1.1.4.jar"/>
         </fileset>
     </path>
 
