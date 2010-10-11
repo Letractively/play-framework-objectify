@@ -3,6 +3,7 @@ package play.modules.objectify;
 import com.google.appengine.api.datastore.QueryResultIterable;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Query;
+import play.Logger;
 import play.db.Model;
 import play.exceptions.UnexpectedException;
 import play.modules.objectify.Datastore;
@@ -164,7 +165,9 @@ public class ObjectifyModelFactory implements Model.Factory {
             }
         }
         if (where != null && where.length() > 0) {
-            // todo
+            // ignored - this is a legacy feature as per
+            // http://groups.google.com/group/play-framework/browse_thread/thread/2acd3843ebe35575
+            Logger.warn("'where' argument is legacy feature - it is not supported");
         }
         return query;
     }
