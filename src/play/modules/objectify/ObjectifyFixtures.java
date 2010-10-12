@@ -3,7 +3,6 @@ package play.modules.objectify;
 import play.Play;
 import play.classloading.ApplicationClasses;
 import play.db.Model;
-import play.modules.objectify.ObjectifyModel;
 import play.test.Fixtures;
 
 import java.util.ArrayList;
