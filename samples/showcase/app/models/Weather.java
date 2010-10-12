@@ -11,7 +11,7 @@ import javax.persistence.Id;
  * @author David Cheong
  * @since 09/10/2010
  */
-public class Weather extends ObjectifyModel {
+public class Weather extends ObjectifyModel<Weather> {
 
     @Id @GeneratedValue public Long id;
     @Required public String description;

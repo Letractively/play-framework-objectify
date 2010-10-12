@@ -15,7 +15,7 @@ import javax.persistence.Id;
  * @author David Cheong
  * @since 3/04/2010
  */
-public class Passenger extends ObjectifyModel {
+public class Passenger extends ObjectifyModel<Passenger> {
 
     @Id public Long id;
     @Required public String firstName;
@@ -52,7 +52,6 @@ public class Passenger extends ObjectifyModel {
     }
 
     public static void deleteByFlightId(Long flightId) {
-        // todo slow if many - how to delete in bulk?
         QueryResultIterable<Key<Passenger>> passengers = Datastore.query(Passenger.class)
                 .ancestor(Datastore.key(Flight.class, flightId))
                 .fetchKeys();
