@@ -148,8 +148,20 @@ public class ObjectifyService {
     }
 
     /**
-     * Finds an entity given a key, creating a blank instance if required.
+     * Finds an entity given a key.
      * 
+     * @param key the key
+     * @param <T> the type
+     * @return the entity instance
+     */
+    @SuppressWarnings({"unchecked"})
+    public static <T> T find(Key<? extends T> key) {
+        return find(key, false);
+    }
+
+    /**
+     * Finds an entity given a key, creating a blank instance if required.
+     *
      * @param key the key
      * @param newIfNull new instance if not null
      * @param <T> the type
@@ -171,8 +183,21 @@ public class ObjectifyService {
     }
 
     /**
-     * Finds an entity given enough information to construct a key, creating a blank instance if required.
+     * Finds an entity given enough information to construct a key.
      * 
+     * @param className the class
+     * @param id the id
+     * @param <T> the type
+     * @return the entity instance
+     */
+    @SuppressWarnings({"unchecked"})
+    public static <T> T find(String className, Long id) {
+        return (T) find(className, id, false);
+    }
+
+    /**
+     * Finds an entity given enough information to construct a key, creating a blank instance if required.
+     *
      * @param className the class
      * @param id the id
      * @param newIfNull new instance if not null
@@ -185,8 +210,21 @@ public class ObjectifyService {
     }
 
     /**
-     * Finds an entity given enough information to construct a key, creating a blank instance if required.
+     * Finds an entity given enough information to construct a key.
      * 
+     * @param className the class name
+     * @param name the name
+     * @param <T> the type
+     * @return the entity instance
+     */
+    @SuppressWarnings({"unchecked"})
+    public static <T> T find(String className, String name) {
+        return (T) find(className, name, false);
+    }
+
+    /**
+     * Finds an entity given enough information to construct a key, creating a blank instance if required.
+     *
      * @param className the class name
      * @param name the name
      * @param newIfNull new instance if not null
@@ -199,8 +237,21 @@ public class ObjectifyService {
     }
 
     /**
-     * Finds an entity given enough information to construct a key, creating a blank instance if required.
+     * Finds an entity given enough information to construct a key.
      * 
+     * @param clazz the class
+     * @param id the id
+     * @param newIfNull new instance if not null
+     * @param <T> the type
+     * @return the entity instance
+     */
+    public static <T> T find(Class<? extends T> clazz, Long id) {
+        return find(clazz, id, false);
+    }
+
+    /**
+     * Finds an entity given enough information to construct a key, creating a blank instance if required.
+     *
      * @param clazz the class
      * @param id the id
      * @param newIfNull new instance if not null
@@ -219,8 +270,20 @@ public class ObjectifyService {
     }
 
     /**
-     * Finds an entity given enough information to construct a key, creating a blank instance if required.
+     * Finds an entity given enough information to construct a key.
      * 
+     * @param clazz the class
+     * @param name the name
+     * @param <T> the type
+     * @return the entity instance
+     */
+    public static <T> T find(Class<? extends T> clazz, String name) {
+        return find(clazz, name, false);
+    }
+
+    /**
+     * Finds an entity given enough information to construct a key, creating a blank instance if required.
+     *
      * @param clazz the class
      * @param name the name
      * @param newIfNull new instance if not null
