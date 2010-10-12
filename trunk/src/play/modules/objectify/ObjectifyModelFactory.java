@@ -6,14 +6,15 @@ import com.googlecode.objectify.Query;
 import play.Logger;
 import play.db.Model;
 import play.exceptions.UnexpectedException;
-import play.modules.objectify.Datastore;
-import play.modules.objectify.ObjectifyModel;
+import play.libs.I18N;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -158,6 +159,18 @@ public class ObjectifyModelFactory implements Model.Factory {
                     else if (Double.class.isAssignableFrom(type) || double.class.isAssignableFrom(type)) {
                         query.filter(fieldName, Double.parseDouble(fieldValue));
                     }
+                    else if (Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type)) {
+                        query.filter(fieldName, Boolean.valueOf(fieldValue));
+                    }
+                    else if (Date.class.equals(type)) {
+                        try {
+                            Date date = new SimpleDateFormat(I18N.getDateFormat()).parse(fieldValue);
+                            query.filter(fieldName, date);
+                        }
+                        catch (ParseException e) {
+                            // ignored
+                        }
+                    }
                     else if (type.isEnum()) {
                         query.filter(fieldName, fieldValue);
                     }
@@ -263,7 +276,10 @@ public class ObjectifyModelFactory implements Model.Factory {
                 Integer.class.isAssignableFrom(type) || int.class.isAssignableFrom(type) ||
                 Long.class.isAssignableFrom(type) || long.class.isAssignableFrom(type) ||
                 Float.class.isAssignableFrom(type) || float.class.isAssignableFrom(type) ||
-                Double.class.isAssignableFrom(type) || double.class.isAssignableFrom(type)) {
+                Double.class.isAssignableFrom(type) || double.class.isAssignableFrom(type) ||
+                Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type) ||
+                Date.class.equals(type) ||
+                type.isEnum()) {
             modelProperty.isSearchable = true;
         }
         if (field.isAnnotationPresent(GeneratedValue.class)) {
