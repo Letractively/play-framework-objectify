@@ -6,6 +6,7 @@ import play.modules.objectify.ObjectifyModel;
 import javax.persistence.Embedded;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import java.util.Date;
 
 /**
  * @author David Cheong
@@ -14,9 +15,11 @@ import javax.persistence.Id;
 public class Weather extends ObjectifyModel<Weather> {
 
     @Id @GeneratedValue public Long id;
+    @Required public Date date;
     @Required public String description;
     @Required public City city;
-    public int temperature;
+    @Required public int temperature;
+    public boolean safeToFly;
     @Embedded public Note note = new Note();
 
 }
