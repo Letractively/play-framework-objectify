@@ -1,5 +1,6 @@
 package extensions;
 
+import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.googlecode.objectify.Key;
 import play.modules.objectify.ObjectifyService;
 import play.templates.JavaExtensions;
@@ -16,8 +17,12 @@ public class ObjectifyKeyExtensions extends JavaExtensions {
         return ObjectifyService.keyStr(key);
     }
 
+    public static <T> T get(Key<T> key) throws EntityNotFoundException {
+        return ObjectifyService.get(key);
+    }
+    
     public static <T> T fetch(Key<T> key) {
         return ObjectifyService.find(key, false);
     }
-    
+
 }
