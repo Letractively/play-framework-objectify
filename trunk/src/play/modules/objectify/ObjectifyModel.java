@@ -14,25 +14,23 @@ import java.lang.reflect.Field;
  * @see play.modules.objectify.ObjectifyBinder
  */
 @SuppressWarnings({"unchecked", "UnusedDeclaration"})
-public abstract class ObjectifyModel implements Model {
+public abstract class ObjectifyModel<T extends ObjectifyModel> implements Model {
 
     /**
      * Returns the {@link Key} associated with this entity instance.
      *
-     * @param <T> the type
      * @return the key
      */
-    public <T extends ObjectifyModel> Key<T> getKey() {
+    public Key<T> getKey() {
         return ObjectifyService.getKey(this);
     }
 
     /**
      * An alias of {@link #getKey()}.
      *
-     * @param <T> the type
      * @return the key
      */
-    public <T extends ObjectifyModel> Key<T> key() {
+    public Key<T> key() {
         return ObjectifyService.key(this);
     }
 
@@ -64,131 +62,26 @@ public abstract class ObjectifyModel implements Model {
     }
 
     /**
-     * Refreshes an entity instance given string identifier.
-     *
-     * @param str the string identifier
-     * @param <R> the type
-     * @return the refreshed instance
+     * Internal save method.
      */
-    public <R> R fetch(String str) {
-
-        String rawKind;
-        String idOrKeyProperty;
-        int colon = str.indexOf(":");
-
-        if (colon == -1) {
-            if (str.endsWith("Id")) {
-                rawKind = str.substring(0, str.length() - 2);
-                idOrKeyProperty = str;
-            }
-            else if (str.endsWith("Key")) {
-                rawKind = str.substring(0, str.length() - 3);
-                idOrKeyProperty = str;
-            }
-            else {
-                rawKind = str;
-                idOrKeyProperty = str;
-            }
-        }
-        else {
-            idOrKeyProperty = str.substring(0, colon);
-            rawKind = str.substring(colon + 1);
-        }
-
-        return (R) fetch(idOrKeyProperty, rawKind);
-
-    }
-
-    /**
-     * Refreshes an entity instance given a Long, String or {@link Key}.
-     *
-     * @param idOrKeyProperty id or key
-     * @param rawKind the kind
-     * @param <R> the type
-     * @return the refreshed instance
-     */
-    public <R> R fetch(String idOrKeyProperty, String rawKind) {
-
-        Class<?> kind = getKind(rawKind);
-        Object idOrKey = getFieldValue(this, idOrKeyProperty);
-
-        if (idOrKey instanceof Long) {
-            return ObjectifyService.find((Class<? extends R>) kind, (Long) idOrKey, false);
-        }
-        else if (idOrKey instanceof String) {
-            return ObjectifyService.find((Class<? extends R>) kind, (String) idOrKey, false);
-        }
-        else if (idOrKey instanceof Key) {
-            return ObjectifyService.find((Key<? extends R>) idOrKey, false);
-        }
-        else if (idOrKey != null) {
-            throw new IllegalArgumentException("Id must be a Long, String, Key or null");
-        }
-        else {
-            return null;
-        }
-
-    }
-
     public void _save() {
         Datastore.put(this);
     }
 
+    /**
+     * Internal delete method.
+     */
     public void _delete() {
         Datastore.delete(this);
     }
 
+    /**
+     * Internal get key method.
+     *
+     * @return the key
+     */
     public Object _key() {
         return getKeyStr();
-    }
-
-    /**
-     * Returns the class for a given input string, prepending it with "models." if required.
-     *
-     * @param rawKind the raw kind
-     * @return the kind as a class
-     */
-    private Class<?> getKind(String rawKind) {
-        if (rawKind.startsWith("models.")) {
-            return ObjectifyService.loadClass(rawKind);
-        }
-        else {
-            return ObjectifyService.loadClass("models." + capitalize(rawKind));
-        }
-    }
-
-    /**
-     * Returns the value of a given field in an object via direct access.
-     *
-     * @param object the object
-     * @param fieldName the field name
-     * @return the field value
-     */
-    private static Object getFieldValue(Object object, String fieldName) {
-        try {
-            Field field = object.getClass().getField(fieldName);
-            return field.get(object);
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Unable to reflectively get value for: " + fieldName);
-        }
-    }
-
-    /**
-     * Capitalize the first character of a given string.
-     *
-     * @param str the input string
-     * @return the output string
-     */
-    private String capitalize(String str) {
-        int strLen;
-        if (str == null || (strLen = str.length()) == 0) {
-            return str;
-        }
-        return new StringBuffer(strLen)
-                .append(Character.toTitleCase(str.charAt(0)))
-                .append(str.substring(1))
-                .toString();
     }
 
 }
