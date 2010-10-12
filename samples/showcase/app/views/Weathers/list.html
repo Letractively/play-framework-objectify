@@ -8,6 +8,15 @@
 		#{crud.search /}
 	</div>
 
+  <div id="crudListSearchHelp" style="color:#999; font-size:.8em; margin:5px 0 20px 0;">
+    Format is fieldName:fieldValue
+    <br/><br/>
+    eg
+    <a href="weathers?search=description:Rainy">description:Rainy</a> or
+    <a href="weathers?search=description:Rainy+temperature:17">description:Rainy temperature:17</a> or
+    <a href="weathers?search=note.text%3D"Some+text"">note.text="Some text"</a> 
+  </div>
+
 	<div id="crudListTable">
 		#{crud.table fields:['id', 'date', 'city', 'description', 'temperature', 'safeToFly', 'note']}
       #{crud.custom 'date'}
