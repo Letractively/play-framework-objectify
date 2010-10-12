@@ -16,14 +16,18 @@ import java.util.Map;
 
 /**
  * The {@link PlayPlugin} to support Objectify on the Google App Engine/J platform. This plugin reads the "objectify.models"
- * property in application.conf to configure Objectify and invokes a binder ({@link ObjectifyBinder} or subclass identified
- * by "objectify.binder" to handle mapping of HTTP parameters.
+ * property in application.conf to configure Objectify. It invokes a binder ({@link ObjectifyBinder} or subclass identified
+ * by "objectify.binder" to handle mapping of HTTP parameters. It invokes a model factory ({@link play.db.Model.Factory}) or
+ * subclass identified by "objectify.modelFactory" to handle model retrieval/lookups.
  *
  * @author David Cheong
  * @since 20/04/2010
  */
 public class ObjectifyPlugin extends PlayPlugin {
 
+    /**
+     * A flag set to true if running on AppSpot, false otherwise
+     */
     protected static Boolean prod;
 
     /**
@@ -145,6 +149,13 @@ public class ObjectifyPlugin extends PlayPlugin {
     public void invocationFinally() {
     }
 
+    /**
+     * Invoked when doing model retrieval/lookups. The model factory returned is {@link ObjectifyModelFactory}
+     * or a subclass identified by "objectify.modelFactory" in application.conf.
+     *
+     * @param modelClass the model class
+     * @return the model factory
+     */
     public Model.Factory modelFactory(Class<? extends Model> modelClass) {
         try {
             String factoryClassName = Play.configuration.getProperty("objectify.modelFactory", ObjectifyModelFactory.class.getName());
