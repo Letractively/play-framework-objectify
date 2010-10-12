@@ -60,7 +60,7 @@ public class PassengerTest extends UnitTest {
 
     @Test
     public void should_delete_passenger() {
-        Passenger passenger = put();
+        put();
         Passenger retrievedPassenger = Datastore
                 .query(Passenger.class)
                 .filter("firstName", "Joe")

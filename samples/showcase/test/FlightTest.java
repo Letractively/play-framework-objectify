@@ -48,7 +48,7 @@ public class FlightTest extends UnitTest {
 
     @Test
     public void should_delete_flight() {
-        Flight flight = put();
+        put();
         Flight retrievedFlight = Datastore
                 .query(Flight.class)
                 .filter("pilot", "Dave")
