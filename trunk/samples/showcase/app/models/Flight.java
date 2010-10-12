@@ -16,7 +16,7 @@ import java.util.List;
  * @author David Cheong
  * @since 3/04/2010
  */
-public class Flight extends ObjectifyModel {
+public class Flight extends ObjectifyModel<Flight> {
 
     @Id public Long id;
     @Required public String pilot;
@@ -64,4 +64,5 @@ public class Flight extends ObjectifyModel {
         Datastore.delete(this);
         Datastore.commit();
     }
+    
 }
