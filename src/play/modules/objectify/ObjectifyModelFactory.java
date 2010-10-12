@@ -29,7 +29,6 @@ public class ObjectifyModelFactory implements Model.Factory {
         this.clazz = clazz;
     }
 
-
     public String keyName() {
         return keyField().getName();
     }
@@ -138,6 +137,7 @@ public class ObjectifyModelFactory implements Model.Factory {
             if (key != null) {
                 searchFieldValues.add(new SearchFieldValue(key, value));
             }
+            boolean hasInequalityFilter = false;
             for (SearchFieldValue searchFieldValue : searchFieldValues) {
                 String fieldName = searchFieldValue.name;
                 String fieldValue = searchFieldValue.value;
@@ -145,8 +145,14 @@ public class ObjectifyModelFactory implements Model.Factory {
                 if (field != null) {
                     Class<?> type = field.getType();
                     if (type.equals(String.class)) {
-                        query.filter(fieldName + " >=", fieldValue);
-                        query.filter(fieldName + " <", fieldValue + "\uFFFD");
+                        if (!hasInequalityFilter) {
+                            query.filter(fieldName + " >=", fieldValue);
+                            query.filter(fieldName + " <", fieldValue + "\uFFFD");
+                            hasInequalityFilter = true;
+                        }
+                        else {
+                            Logger.warn("Datastore only allows one inequality filter per query, search by '" + fieldName + "' is silently ignored");
+                        }
                     }
                     else if (Integer.class.isAssignableFrom(type) || int.class.isAssignableFrom(type)) {
                         query.filter(fieldName, Integer.parseInt(fieldValue));
