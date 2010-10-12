@@ -29,6 +29,7 @@ public class ObjectifyModelFactory implements Model.Factory {
         this.clazz = clazz;
     }
 
+
     public String keyName() {
         return keyField().getName();
     }
@@ -202,16 +203,28 @@ public class ObjectifyModelFactory implements Model.Factory {
     }
 
     protected Field findField(String fieldName) {
+        String[] paths = fieldName.split("\\.");
+        int index = 0;
         Class<?> tclazz = clazz;
         while (!tclazz.equals(Object.class)) {
+            boolean goToSuperClass = true;
             Field[] fields = tclazz.getDeclaredFields();
             for (Field field : fields) {
-                if (field.getName().equals(fieldName)) {
+                if (field.getName().equals(paths[index])) {
                     field.setAccessible(true);
-                    return field;
+                    if (index == paths.length - 1) {
+                        return field;
+                    }
+                    else {
+                        index++;
+                        tclazz = field.getType();
+                        goToSuperClass = false;
+                    }
                 }
             }
-            tclazz = tclazz.getSuperclass();
+            if (goToSuperClass) {
+                tclazz = tclazz.getSuperclass();
+            }
         }
         return null;
     }
