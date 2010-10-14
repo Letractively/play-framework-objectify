@@ -62,6 +62,24 @@ public abstract class ObjectifyModel<T extends ObjectifyModel> implements Model 
     }
 
     /**
+     * Returns the key field.
+     *
+     * @return the key field
+     */
+    public Field getKeyField() {
+        return Utils.getKeyField(this.getClass());
+    }
+
+    /**
+     * Returns the key type.
+     *
+     * @return the key type
+     */
+    public Class getKeyType() {
+        return Utils.getKeyType(this.getClass());
+    }
+
+    /**
      * Internal save method.
      */
     public void _save() {
