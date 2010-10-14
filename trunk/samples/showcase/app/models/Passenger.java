@@ -62,4 +62,9 @@ public class Passenger extends ObjectifyModel<Passenger> {
         Datastore.delete(this);
     }
 
+    @Override
+    public String toString() {
+        return firstName + " " + lastName;
+    }
+
 }

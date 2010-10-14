@@ -64,5 +64,10 @@ public class Flight extends ObjectifyModel<Flight> {
         Datastore.delete(this);
         Datastore.commit();
     }
-    
+
+    @Override
+    public String toString() {
+        return pilot + " (" + (origin != null ? origin.label : "?") + " - " + (destination != null ? destination.label : "?") + ")";
+    }
+
 }

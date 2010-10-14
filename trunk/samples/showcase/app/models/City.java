@@ -11,6 +11,7 @@ public enum City {
     HONG_KONG("Hong Kong"),
     LONDON("London"),
     NEW_YORK("New York"),
+    SAN_FRANCISCO("San Francisco"),
     PARIS("Paris"),
     SYDNEY("Sydney");
 
