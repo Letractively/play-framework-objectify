@@ -47,8 +47,8 @@ public class FixturesTest extends UnitTest {
         assertNotNull("Weather date is null", weather.date);
         assertEquals("Weather date is null", "2010-01-01", formatDate(weather.date));
         assertNotNull("Weather affected flights is null", weather.affectedFlights);
-//        assertEquals("Weather affected flights count is null", 1, weather.affectedFlights.size());
-//        assertEquals("Weather affected flight is not correct", flight.key(), weather.affectedFlights.get(0));
+        assertEquals("Weather affected flights count is null", 1, weather.affectedFlights.size());
+        assertEquals("Weather affected flight is not correct", flight.key(), weather.affectedFlights.get(0));
 
     }
 
