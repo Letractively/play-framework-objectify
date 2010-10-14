@@ -13,6 +13,10 @@ import play.templates.JavaExtensions;
  */
 public class ObjectifyKeyExtensions extends JavaExtensions {
 
+    public static String _key(Key<?> key) {
+        return str(key);
+    }
+
     public static String str(Key<?> key) {
         return ObjectifyService.keyStr(key);
     }
