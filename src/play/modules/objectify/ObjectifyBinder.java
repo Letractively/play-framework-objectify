@@ -247,14 +247,16 @@ public class ObjectifyBinder {
                             else if (Utils.isSimpleType(fieldManyRawClass)) {
                                 Collection collection = newCollection(field, fieldPath);
                                 for (String fieldValue : fieldValues) {
-                                    Object convertedFieldValue;
-                                    if (fieldManyRawClass.isEnum()) {
-                                        convertedFieldValue = getEnumValue(fieldValue, fieldManyRawClass);
+                                    if (fieldValue != null && fieldValue.length() > 0) {
+                                        Object convertedFieldValue;
+                                        if (fieldManyRawClass.isEnum()) {
+                                            convertedFieldValue = getEnumValue(fieldValue, fieldManyRawClass);
+                                        }
+                                        else {
+                                            convertedFieldValue = Binder.directBind(fieldValue, fieldManyRawClass);
+                                        }
+                                        collection.add(convertedFieldValue);
                                     }
-                                    else {
-                                        convertedFieldValue = Binder.directBind(fieldValue, fieldManyRawClass);
-                                    }
-                                    collection.add(convertedFieldValue);
                                 }
                                 Object collectionOrArray = Utils.convertToArrayIfRequired(fieldType, fieldManyRawClass, collection);
                                 bw.set(fieldName, instance, collectionOrArray);

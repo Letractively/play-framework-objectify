@@ -1,6 +1,5 @@
 package play.modules.objectify;
 
-import com.google.appengine.api.datastore.QueryResultIterable;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Query;
 import play.Logger;
@@ -8,6 +7,7 @@ import play.db.Model;
 import play.exceptions.UnexpectedException;
 import play.libs.I18N;
 
+import javax.persistence.Embedded;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Transient;
@@ -246,7 +246,7 @@ public class ObjectifyModelFactory implements Model.Factory {
             }
             if (Collection.class.isAssignableFrom(type) || type.isArray()) {
                 Class rawClass = Utils.getManyFieldRawClass(field);
-                if (!Key.class.isAssignableFrom(rawClass)) {
+                if (!Key.class.isAssignableFrom(rawClass) && !rawClass.isEnum()) {
                     continue;
                 }
             }
@@ -297,8 +297,8 @@ public class ObjectifyModelFactory implements Model.Factory {
             modelProperty.isMultiple = true;
             modelProperty.isRelation = true;
             modelProperty.isSearchable = false;
-            Class rawClass = Utils.getManyFieldRawClass(field);
-            Class rawType = Utils.getManyFieldRawType(field);
+            final Class rawClass = Utils.getManyFieldRawClass(field);
+            final Class rawType = Utils.getManyFieldRawType(field);
             if (Key.class.isAssignableFrom(rawClass)) {
                 modelProperty.relationType = rawType;
                 modelProperty.choices = new Model.Choices() {
@@ -309,6 +309,15 @@ public class ObjectifyModelFactory implements Model.Factory {
                     }
                 };
             }
+            else if (rawType.isEnum()) {
+                modelProperty.relationType = rawType;
+                modelProperty.choices = new Model.Choices() {
+                    @SuppressWarnings("unchecked")
+                    public List<Object> list() {
+                        return (List<Object>) Arrays.asList(rawType.getEnumConstants());
+                    }
+                };
+            }
             else {
                 modelProperty.relationType = rawType;
                 // crud api does not make this possible
@@ -316,12 +325,17 @@ public class ObjectifyModelFactory implements Model.Factory {
             }
         }
         else if (type.isEnum()) {
+            modelProperty.isSearchable = true;
             modelProperty.choices = new Model.Choices() {
                 @SuppressWarnings({"unchecked", "RedundantCast"})
                 public List<Object> list() {
                     return (List<Object>) Arrays.asList(type.getEnumConstants());
                 }
             };
+        }
+        else if (field.getAnnotation(Embedded.class) != null) {
+            modelProperty.relationType = field.getType();
+            modelProperty.isSearchable = true;
         }
         else if (Utils.isSimpleType(type)) {
             modelProperty.isSearchable = true;
