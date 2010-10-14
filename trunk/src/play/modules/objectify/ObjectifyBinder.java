@@ -3,21 +3,20 @@ package play.modules.objectify;
 import com.googlecode.objectify.Key;
 import play.data.binding.BeanWrapper;
 import play.data.binding.Binder;
+import play.data.validation.Error;
+import play.data.validation.Validation;
 import play.exceptions.UnexpectedException;
 
 import javax.persistence.Embedded;
-import javax.persistence.Id;
-import java.lang.reflect.Array;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 
 /**
- * A simple binder which has a single entry point method {@link #bind(String, Class, java.lang.reflect.Type, java.util.Map)}
- * which is invoked by {@link ObjectifyPlugin#bind(String, Class, java.lang.reflect.Type, java.lang.annotation.Annotation[], java.util.Map)}
- * to handling binding. Applications wishing to provide custom binding logic may subclass this and provide a reference via the "objectify.binder"
- * property in application.conf.
+ * A simple binder which has a two bind() entry methods which is invoked from their corresponding {@link ObjectifyPlugin} bind() methods
+ * to handling binding. Applications wishing to provide custom binding logic may subclass this and provide a reference via the
+ * "objectify.binder" property in application.conf.
  *
  * @author David Cheong
  * @since 29/04/2010
@@ -32,11 +31,13 @@ public class ObjectifyBinder {
      * @param name the param name
      * @param clazz the target class which should be ObjectifyModel
      * @param type the type
+     * @param annotations the annotations
      * @param params the params map
      * @return the bound instance or null
      */
     @SuppressWarnings({"unchecked", "UnusedDeclaration"})
-    public Object bind(String name, Class clazz, Type type, Map<String, String[]> params) {
+    // todo annotations are not currently used
+    public Object bind(String name, Class clazz, Type type, Annotation[] annotations, Map<String, String[]> params) {
 
         if (ObjectifyModel.class.isAssignableFrom(clazz)) {
 
@@ -46,7 +47,7 @@ public class ObjectifyBinder {
 
                 String rawId = params.get(idKey)[0];
                 params.remove(idKey);
-                Class idType = findKeyType(clazz);
+                Class idType = Utils.getKeyType(clazz);
 
                 ObjectifyModel instance = find(clazz, rawId, idType);
                 if (instance != null) {
@@ -56,6 +57,29 @@ public class ObjectifyBinder {
             }
 
             return create(clazz, name, params);
+
+        }
+
+        return null;
+
+    }
+
+    /**
+     * Invoked when binding parameters to {@link ObjectifyModel} instances.
+     *
+     * @param name the param name
+     * @param o the instance
+     * @param params the params map
+     * @return the bound instance of null
+     */
+    public Object bind(String name, Object o, Map<String, String[]> params) {
+
+        if (ObjectifyModel.class.isAssignableFrom(o.getClass())) {
+
+            String idKey = name + ".id";
+            params.remove(idKey);
+
+            return edit(o, name, params);
 
         }
 
@@ -76,7 +100,7 @@ public class ObjectifyBinder {
      */
     public <T extends ObjectifyModel> T find(Class<T> clazz, String rawId, Class idType) {
         Key<T> key = null;
-        if (isNumeric(rawId)) {
+        if (Utils.isNumeric(rawId)) {
             key = new Key<T>(clazz, Long.parseLong(rawId));
         }
         else if (idType.equals(String.class)) {
@@ -135,6 +159,9 @@ public class ObjectifyBinder {
                 Collections.addAll(fields, clazz.getDeclaredFields());
                 clazz = clazz.getSuperclass();
             }
+            clazz = instance.getClass();
+
+            Set<String> handledFieldPaths = new HashSet<String>();
 
             for (Field field : fields) {
 
@@ -148,6 +175,11 @@ public class ObjectifyBinder {
                 boolean many = Collection.class.isAssignableFrom(fieldType) || fieldType.isArray();
 
                 if (Key.class.isAssignableFrom(fieldType)) {
+                    if (fieldValues == null) {
+                        Field keyField = Utils.getKeyField(clazz);
+                        fieldPath = fieldPath + "." + keyField.getName();
+                        fieldValues = params.get(fieldPath);
+                    }
                     if (fieldValues != null && fieldValues.length > 0) {
                         if (!fieldValues[0].equals("")) {
                             params.remove(fieldPath);
@@ -160,21 +192,35 @@ public class ObjectifyBinder {
                             params.remove(fieldPath);
                         }
                     }
+                    handledFieldPaths.add(fieldPath);
                 }
                 else if (many) {
-                    if (fieldValues == null && getParamsByKeyPrefix(params, fieldPath + "[0]").size() == 0) {
+                    Field keyField = Utils.getKeyField(clazz);
+                    String altFieldPath = fieldPath + "." + keyField.getName();
+                    String[] altFieldValues = params.get(altFieldPath);
+                    if (fieldValues == null && getParamsByKeyPrefix(params, fieldPath + "[0]").size() == 0 &&
+                            (altFieldValues == null || altFieldValues.length == 0 || (altFieldValues.length == 1 && "".equals(altFieldValues[0])))) {
                         bw.set(fieldName, instance, null);
                     }
                     else {
-                        Class fieldManyRawType = getCollectionFieldRawType(field);
-                        if (fieldManyRawType != null) {
-                            if (Key.class.isAssignableFrom(fieldManyRawType)) {
+                        Class fieldManyRawClass = Utils.getManyFieldRawClass(field);
+                        if (fieldManyRawClass != null) {
+                            if (Key.class.isAssignableFrom(fieldManyRawClass)) {
                                 Collection collection = newCollection(field, fieldPath);
-                                for (String rawId : fieldValues) {
-                                    Key key = ObjectifyService.getKey(rawId);
-                                    collection.add(key);
+                                if (fieldValues == null) {
+                                    handledFieldPaths.add(fieldPath);
+                                    fieldPath = altFieldPath;
+                                    fieldValues = altFieldValues;
                                 }
-                                Object collectionOrArray = convertToArrayIfRequired(fieldType, fieldManyRawType, collection);
+                                if (fieldValues != null) {
+                                    for (String rawId : fieldValues) {
+                                        if (rawId != null && rawId.length() > 0) {
+                                            Key key = ObjectifyService.getKey(rawId);
+                                            collection.add(key);
+                                        }
+                                    }
+                                }
+                                Object collectionOrArray = Utils.convertToArrayIfRequired(fieldType, fieldManyRawClass, collection);
                                 bw.set(fieldName, instance, collectionOrArray);
                                 params.remove(fieldPath);
                             }
@@ -186,7 +232,7 @@ public class ObjectifyBinder {
                                     String fieldPathNested = fieldPath + "[" + i + "]";
                                     paramsNested = getParamsByKeyPrefix(params, fieldPathNested);
                                     if (paramsNested.size() > 0) {
-                                        Object fieldValue = ObjectifyService.instantiate(fieldManyRawType);
+                                        Object fieldValue = ObjectifyService.instantiate(fieldManyRawClass);
                                         fieldValue = edit(fieldValue, fieldPathNested, paramsNested);
                                         collection.add(fieldValue);
                                         i++;
@@ -195,22 +241,22 @@ public class ObjectifyBinder {
                                         break;
                                     }
                                 }
-                                Object collectionOrArray = convertToArrayIfRequired(fieldType, fieldManyRawType, collection);
+                                Object collectionOrArray = Utils.convertToArrayIfRequired(fieldType, fieldManyRawClass, collection);
                                 bw.set(fieldName, instance, collectionOrArray);
                             }
-                            else if (isSimpleType(fieldManyRawType)) {
+                            else if (Utils.isSimpleType(fieldManyRawClass)) {
                                 Collection collection = newCollection(field, fieldPath);
                                 for (String fieldValue : fieldValues) {
                                     Object convertedFieldValue;
-                                    if (fieldManyRawType.isEnum()) {
-                                        convertedFieldValue = getEnumValue(fieldValue, fieldManyRawType);
+                                    if (fieldManyRawClass.isEnum()) {
+                                        convertedFieldValue = getEnumValue(fieldValue, fieldManyRawClass);
                                     }
                                     else {
-                                        convertedFieldValue = Binder.directBind(fieldValue, fieldManyRawType);
+                                        convertedFieldValue = Binder.directBind(fieldValue, fieldManyRawClass);
                                     }
                                     collection.add(convertedFieldValue);
                                 }
-                                Object collectionOrArray = convertToArrayIfRequired(fieldType, fieldManyRawType, collection);
+                                Object collectionOrArray = Utils.convertToArrayIfRequired(fieldType, fieldManyRawClass, collection);
                                 bw.set(fieldName, instance, collectionOrArray);
                                 params.remove(fieldPath);
                             }
@@ -219,19 +265,32 @@ public class ObjectifyBinder {
                             }
                         }
                         else {
-                            throw new UnexpectedException("Unable to bind: " + instance.getClass() + ", " + fieldPath + " is a non-parameterized collection");
+                            throw new UnexpectedException("Unable to bind: " + instance.getClass() + ", " + fieldPath + " is a non-parametrized collection");
                         }
                     }
+                    handledFieldPaths.add(fieldPath);
                 }
                 else if (embedded) {
                     Object fieldValue = ObjectifyService.instantiate(fieldType);
                     fieldValue = edit(fieldValue, fieldPath, params);
                     bw.set(fieldName, instance, fieldValue);
+                    handledFieldPaths.add(fieldPath);
                 }
 
             }
 
             bw.bind(name, instance.getClass(), params, "", instance, null);
+
+            Validation validation = Validation.current();
+            Field errorsField = validation.getClass().getDeclaredField("errors");
+            errorsField.setAccessible(true);
+            List<Error> errors = (List<Error>) errorsField.get(validation);
+            for (int i = errors.size() - 1; i >= 0; i--) {
+                Error error = errors.get(i);
+                if (handledFieldPaths.contains(error.getKey())) {
+                    errors.remove(i);
+                }
+            }
 
             return instance;
 
@@ -275,49 +334,6 @@ public class ObjectifyBinder {
     }
 
     /**
-     * Converts a given {@link Collection} to a native Java array if mandated by the field type.
-     *
-     * @param fieldType the field type
-     * @param rawType the raw type when creating the array
-     * @param collection the source Collection
-     * @return the source Collection or the converted array of raw types
-     */
-    @SuppressWarnings({"unchecked"})
-    public static Object convertToArrayIfRequired(Class fieldType, Class rawType, Collection collection) {
-        if (fieldType.isArray()) {
-            Object[] array = (Object[]) Array.newInstance(rawType, collection.size());
-            return collection.toArray(array);
-        }
-        else {
-            return collection;
-        }
-    }
-
-    /**
-     * Obtains the collection or array raw type for a given field which is a native Java array
-     * or a generic {@link Collection}.
-     *
-     * @param field the field
-     * @return the raw type or null if the input is invalid
-     */
-    public static Class getCollectionFieldRawType(Field field) {
-        if (field.getType().isArray()) {
-            return field.getType().getComponentType();
-        }
-        else {
-            Type type = field.getGenericType();
-            if (type instanceof ParameterizedType) {
-                ParameterizedType genericType = (ParameterizedType) field.getGenericType();
-                Type[] args = genericType.getActualTypeArguments();
-                if (args != null && args.length > 0 && args[0] != null) {
-                    return (Class) args[0];
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
      * Creates a {@link Map} containing a subset of parameters matching the given key prefix
      * from the supplied parameters.
      *
@@ -336,66 +352,6 @@ public class ObjectifyBinder {
             }
         }
         return newParams;
-    }
-
-    /**
-     * Obtains the key type given an entity class containing a field suitably annotated with {@link Id}.
-     *
-     * @param clazz the entity class
-     * @return the key type
-     */
-    public static Class findKeyType(Class clazz) {
-        try {
-            while (!clazz.equals(Object.class)) {
-                for (Field field : clazz.getDeclaredFields()) {
-                    if (field.isAnnotationPresent(Id.class)) {
-                        field.setAccessible(true);
-                        return field.getType();
-                    }
-                }
-                clazz = clazz.getSuperclass();
-            }
-        }
-        catch (Exception e) {
-            throw new UnexpectedException("Error while determining the @Id for an object of type: " + clazz);
-        }
-        return null;
-    }
-
-    /**
-     * Returns true if the input string is non-null and contains only numeric characters.
-     *
-     * @param str the input string
-     * @return true if numeric, false otherwise
-     */
-    public static boolean isNumeric(String str) {
-        if (str == null) {
-            return false;
-        }
-        int length = str.length();
-        for (int i = 0; i < length; i++) {
-            if (!Character.isDigit(str.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Returns true if the type supplied is "simple".
-     *
-     * @param type the type
-     * @return true if simple, false otherwise
-     */
-    public boolean isSimpleType(Class type) {
-        return String.class.equals(type) ||
-                Number.class.isAssignableFrom(type) ||
-                type.isPrimitive() ||
-                type.isEnum() ||
-                Date.class.equals(type) ||
-                Boolean.class.isAssignableFrom(type) ||
-                boolean.class.isAssignableFrom(type)
-                ;
     }
 
 }

@@ -75,8 +75,7 @@ public class ObjectifyPlugin extends PlayPlugin {
     }
 
     /**
-     * Invoked when binding HTTP parameters to Java instances. The actual binding is handled by
-     * {@link ObjectifyBinder} or a subclass identified by "objectify.binder" in application.conf.
+     * Invoked when binding HTTP parameters to Java instances.
      *
      * @param name the param name
      * @param clazz the target class which should be ObjectifyModel
@@ -84,16 +83,43 @@ public class ObjectifyPlugin extends PlayPlugin {
      * @param annotations the annotations array
      * @param params the params map
      * @return the bound instance or null
+     * #see resolveBinder
      */
     @Override
     @SuppressWarnings({"unchecked"})
     public Object bind(String name, Class clazz, Type type, Annotation[] annotations, Map<String, String[]> params) {
+        ObjectifyBinder binder = resolveBinder();
+        Object result = binder.bind(name, clazz, type, annotations, params);
+        return result == null ? super.bind(name, clazz, type, annotations, params) : result;
+    }
+
+    /**
+     * Invoked when binding parameters to Java instances.
+     *
+     * @param name the param name
+     * @param o the object
+     * @param params the params map
+     * @return the bound instance or null
+     * #see resolveBinder
+     */
+    @Override
+    public Object bind(String name, Object o, Map<String, String[]> params) {
+        ObjectifyBinder binder = resolveBinder();
+        Object result = binder.bind(name, o, params);
+        return result == null ? super.bind(name, o, params) : result;
+    }
+
+    /**
+     * Resolves {@link ObjectifyBinder} or a subclass identified by "objectify.binder" in application.conf.
+     *
+     * @return the binder instance
+     */
+    @SuppressWarnings({"unchecked"})
+    protected ObjectifyBinder resolveBinder() {
         String binderClassName = Play.configuration.getProperty("objectify.binder", ObjectifyBinder.class.getName());
         try {
             Class<? extends ObjectifyBinder> binderClass = (Class<? extends ObjectifyBinder>) Play.classloader.loadClass(binderClassName);
-            ObjectifyBinder binder = binderClass.newInstance();
-            Object result = binder.bind(name, clazz, type, params);
-            return result == null ? super.bind(name, clazz, type, annotations, params) : result;
+            return binderClass.newInstance();
         }
         catch (Exception e) {
             throw new UnexpectedException("Unable to bind via binder: " + binderClassName + "," + e.getMessage(), e);

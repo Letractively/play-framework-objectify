@@ -243,17 +243,21 @@ public class ObjectifyModelFactory implements Model.Factory {
             Collections.addAll(fields, tclazz.getDeclaredFields());
             tclazz = tclazz.getSuperclass();
         }
-        for (Field f : fields) {
-            if (Modifier.isTransient(f.getModifiers())) {
+        for (Field field : fields) {
+            Class<?> type = field.getType();
+            if (Modifier.isTransient(field.getModifiers())) {
                 continue;
             }
-            if (f.isAnnotationPresent(Transient.class)) {
+            if (field.isAnnotationPresent(Transient.class)) {
                 continue;
             }
-            if (Collection.class.isAssignableFrom(f.getType())) {
-                continue;
+            if (Collection.class.isAssignableFrom(type) || type.isArray()) {
+                Class rawClass = Utils.getManyFieldRawClass(field);
+                if (!Key.class.isAssignableFrom(rawClass)) {
+                    continue;
+                }
             }
-            Model.Property mp = buildProperty(f);
+            Model.Property mp = buildProperty(field);
             if (mp != null) {
                 properties.add(mp);
             }
@@ -262,11 +266,16 @@ public class ObjectifyModelFactory implements Model.Factory {
     }
 
     protected Model.Property buildProperty(final Field field) {
-        Model.Property modelProperty = new Model.Property();
+
+        final Model.Property modelProperty = new Model.Property();
         final Class<?> type = field.getType();
+
+        boolean many = Collection.class.isAssignableFrom(type) || type.isArray();
+
         modelProperty.type = type;
         modelProperty.field = field;
         modelProperty.name = field.getName();
+
         if (Model.class.isAssignableFrom(type)) {
             modelProperty.isRelation = true;
             modelProperty.isSearchable = true;
@@ -275,7 +284,7 @@ public class ObjectifyModelFactory implements Model.Factory {
                 @SuppressWarnings("unchecked")
                 public List<Object> list() {
                     List<Object> list = new ArrayList<Object>();
-                    QueryResultIterable<?> iterable = Datastore.query(type).fetch();
+                    QueryResultIterable<?> iterable = Datastore.query(modelProperty.relationType).fetch();
                     for (Object object : iterable) {
                         list.add(object);
                     }
@@ -283,7 +292,49 @@ public class ObjectifyModelFactory implements Model.Factory {
                 }
             };
         }
-        if (type.isEnum()) {
+        else if (Key.class.isAssignableFrom(type)) {
+            modelProperty.isRelation = true;
+            modelProperty.isSearchable = false;
+            modelProperty.relationType = Utils.getSingleFieldRawClass(field);
+            modelProperty.choices = new Model.Choices() {
+                @SuppressWarnings("unchecked")
+                public List<Object> list() {
+                    List<Object> list = new ArrayList<Object>();
+                    QueryResultIterable<?> iterable = Datastore.query(modelProperty.relationType).fetch();
+                    for (Object object : iterable) {
+                        list.add(object);
+                    }
+                    return list;
+                }
+            };
+        }
+        else if (many) {
+            modelProperty.isMultiple = true;
+            modelProperty.isRelation = true;
+            modelProperty.isSearchable = false;
+            Class rawClass = Utils.getManyFieldRawClass(field);
+            Class rawType = Utils.getManyFieldRawType(field);
+            if (Key.class.isAssignableFrom(rawClass)) {
+                modelProperty.relationType = rawType;
+                modelProperty.choices = new Model.Choices() {
+                    @SuppressWarnings("unchecked")
+                    public List<Object> list() {
+                        List<Object> list = new ArrayList<Object>();
+                        QueryResultIterable<?> iterable = Datastore.query(modelProperty.relationType).fetch();
+                        for (Object object : iterable) {
+                            list.add(object);
+                        }
+                        return list;
+                    }
+                };
+            }
+            else {
+                modelProperty.relationType = rawType;
+                // crud api does not make this possible
+                throw new UnexpectedException("CRUD does not allow non-Key collections from being managed");
+            }
+        }
+        else if (type.isEnum()) {
             modelProperty.choices = new Model.Choices() {
                 @SuppressWarnings({"unchecked", "RedundantCast"})
                 public List<Object> list() {
@@ -291,21 +342,17 @@ public class ObjectifyModelFactory implements Model.Factory {
                 }
             };
         }
-        if (type.equals(String.class) ||
-                Integer.class.isAssignableFrom(type) || int.class.isAssignableFrom(type) ||
-                Long.class.isAssignableFrom(type) || long.class.isAssignableFrom(type) ||
-                Float.class.isAssignableFrom(type) || float.class.isAssignableFrom(type) ||
-                Double.class.isAssignableFrom(type) || double.class.isAssignableFrom(type) ||
-                Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type) ||
-                Date.class.equals(type) ||
-                type.isEnum()) {
+        else if (Utils.isSimpleType(type)) {
             modelProperty.isSearchable = true;
         }
+
         if (field.isAnnotationPresent(GeneratedValue.class)) {
             modelProperty.isGenerated = true;
             modelProperty.isSearchable = true;
         }
+
         return modelProperty;
+
     }
 
     public static class SearchFieldValue {
