@@ -1,5 +1,8 @@
 package play.modules.objectify;
 
+import com.google.appengine.api.datastore.QueryResultIterable;
+import com.google.appengine.api.datastore.QueryResultIterator;
+import com.googlecode.objectify.Query;
 import play.exceptions.UnexpectedException;
 
 import javax.persistence.Id;
@@ -7,8 +10,10 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 /**
  * A class containing convenient utilities.
@@ -188,6 +193,48 @@ public class Utils extends play.utils.Utils {
                 Boolean.class.isAssignableFrom(type) ||
                 boolean.class.isAssignableFrom(type)
                 ;
+    }
+
+    /**
+     * Copies the items in the query supplied into a list.
+     *
+     * @param query the query
+     * @param <T> the type
+     * @return the list
+     */
+    public static <T> List<T> asList(Query<T> query) {
+        return asList(query.fetch());
+    }
+
+    /**
+     * Copies the items in the iterable supplied into a list.
+     *
+     * @param itr the iterable
+     * @param <T> the type
+     * @return the list
+     */
+    public static <T> List<T> asList(QueryResultIterable<T> itr) {
+        List<T> list = new ArrayList<T>();
+        for (T instance : itr) {
+            list.add(instance);
+        }
+        return list;
+    }
+
+    /**
+     * Copies the items in the iterator supplied into a list.
+     *
+     * @param itr the iterator
+     * @param <T> the type
+     * @return the list
+     */
+    public static <T> List<T> asList(QueryResultIterator<T> itr) {
+        List<T> list = new ArrayList<T>();
+        while (itr.hasNext()) {
+            T instance = itr.next();
+            list.add(instance);
+        }
+        return list;
     }
 
 }
