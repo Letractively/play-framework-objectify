@@ -8,7 +8,6 @@ import play.modules.objectify.Datastore;
 import play.modules.objectify.ObjectifyModel;
 
 import javax.persistence.Embedded;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.util.List;
 
@@ -47,8 +46,15 @@ public class Flight extends ObjectifyModel<Flight> {
     }
 
     public Key<Flight> save() {
-        owner = Application.getUserEmail();
+        if (owner == null || owner.length() == 0) {
+            owner = Application.getUserEmail();
+        }
         return Datastore.put(this);
+    }
+
+    @Override
+    public void _save() {
+        save();
     }
 
     public static void deleteById(Long id) {
@@ -63,6 +69,11 @@ public class Flight extends ObjectifyModel<Flight> {
         Passenger.deleteByFlightId(id);
         Datastore.delete(this);
         Datastore.commit();
+    }
+
+    @Override
+    public void _delete() {
+        delete();
     }
 
     @Override
