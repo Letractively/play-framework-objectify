@@ -23,9 +23,9 @@ import java.util.*;
  */
 public class ObjectifyModelFactory implements Model.Factory {
 
-    protected Class<? extends Model> clazz;
+    protected Class<Model> clazz;
 
-    public ObjectifyModelFactory(Class<? extends Model> clazz) {
+    public ObjectifyModelFactory(Class<Model> clazz) {
         this.clazz = clazz;
     }
 
@@ -67,7 +67,7 @@ public class ObjectifyModelFactory implements Model.Factory {
     }
 
     public List<Model> fetch(int offset, int length, String orderBy, String orderDirection, List<String> properties, String keywords, String where) {
-        Query<? extends Model> query = getSearchQuery(keywords, where);
+        Query<Model> query = getSearchQuery(keywords, where);
         if (orderBy != null && orderBy.length() > 0) {
             if ("DESC".equalsIgnoreCase(orderDirection)) {
                 query.order("-" + orderBy);
@@ -76,12 +76,7 @@ public class ObjectifyModelFactory implements Model.Factory {
                 query.order(orderBy);
             }
         }
-        List<Model> list = new ArrayList<Model>();
-        QueryResultIterable<? extends Model> itr = query.fetch();
-        for (Model model : itr) {
-            list.add(model);
-        }
-        return list;
+        return Utils.asList(query);
     }
 
     public Long count(List<String> properties, String keywords, String where) {
@@ -89,8 +84,8 @@ public class ObjectifyModelFactory implements Model.Factory {
         return (long) query.countAll();
     }
 
-    protected Query<? extends Model> getSearchQuery(String keywords, String where) {
-        Query<? extends Model> query = Datastore.query(clazz);
+    protected Query<Model> getSearchQuery(String keywords, String where) {
+        Query<Model> query = Datastore.query(clazz);
         if (keywords != null && keywords.length() > 0) {
             String[] keyWordsAsArray = keywords.split(" ");
             List<SearchFieldValue> searchFieldValues = new ArrayList<SearchFieldValue>();
@@ -193,19 +188,17 @@ public class ObjectifyModelFactory implements Model.Factory {
     }
 
     public void deleteAll() {
-        boolean hasOne = true;
-        while (hasOne) {
-            QueryResultIterable<? extends Model> itr = Datastore
+        boolean hasOne;
+        do {
+            hasOne = false;
+            Query<? extends Model> query = Datastore
                     .query(clazz)
-                    .limit(50)
-                    .fetch();
-            if (!itr.iterator().hasNext()) {
-                hasOne = false;
-            }
-            for (Model model : itr) {
+                    .limit(50);
+            for (Model model : query) {
                 Datastore.delete(model);
+                hasOne = true;
             }
-        }
+        } while (hasOne);
     }
 
     protected Field findField(String fieldName) {
@@ -283,12 +276,8 @@ public class ObjectifyModelFactory implements Model.Factory {
             modelProperty.choices = new Model.Choices() {
                 @SuppressWarnings("unchecked")
                 public List<Object> list() {
-                    List<Object> list = new ArrayList<Object>();
-                    QueryResultIterable<?> iterable = Datastore.query(modelProperty.relationType).fetch();
-                    for (Object object : iterable) {
-                        list.add(object);
-                    }
-                    return list;
+                    Query<?> query = Datastore.query(modelProperty.relationType);
+                    return (List<Object>) Utils.asList(query);
                 }
             };
         }
@@ -299,12 +288,8 @@ public class ObjectifyModelFactory implements Model.Factory {
             modelProperty.choices = new Model.Choices() {
                 @SuppressWarnings("unchecked")
                 public List<Object> list() {
-                    List<Object> list = new ArrayList<Object>();
-                    QueryResultIterable<?> iterable = Datastore.query(modelProperty.relationType).fetch();
-                    for (Object object : iterable) {
-                        list.add(object);
-                    }
-                    return list;
+                    Query<?> query = Datastore.query(modelProperty.relationType);
+                    return (List<Object>) Utils.asList(query);
                 }
             };
         }
@@ -319,12 +304,8 @@ public class ObjectifyModelFactory implements Model.Factory {
                 modelProperty.choices = new Model.Choices() {
                     @SuppressWarnings("unchecked")
                     public List<Object> list() {
-                        List<Object> list = new ArrayList<Object>();
-                        QueryResultIterable<?> iterable = Datastore.query(modelProperty.relationType).fetch();
-                        for (Object object : iterable) {
-                            list.add(object);
-                        }
-                        return list;
+                        Query<?> query = Datastore.query(modelProperty.relationType);
+                        return (List<Object>) Utils.asList(query);
                     }
                 };
             }
