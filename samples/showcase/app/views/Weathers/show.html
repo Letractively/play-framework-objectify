@@ -6,7 +6,7 @@
 	
 	<div class="objectForm">
 	#{form action:@save(object._key()), enctype:'multipart/form-data'}
-		#{crud.form fields:['date', 'city', 'description', 'temperature', 'safeToFly', 'note']}
+		#{crud.form fields:['date', 'city', 'description', 'temperature', 'safeToFly', 'note', 'affectedFlights']}
       #{crud.custom 'note'}
         #{field 'object.note.text'}
           <label for="note">&{'note'}</label>
