@@ -6,10 +6,7 @@ import com.googlecode.objectify.Query;
 import play.exceptions.UnexpectedException;
 
 import javax.persistence.Id;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -99,24 +96,45 @@ public class Utils extends play.utils.Utils {
      */
     public static Class getManyFieldRawType(Field field) {
         if (field.getType().isArray()) {
-            return field.getType().getComponentType();
+            Type type = field.getGenericType();
+            if (type instanceof GenericArrayType) {
+                GenericArrayType genericArrayType = (GenericArrayType) field.getGenericType();
+                Type genericType = genericArrayType.getGenericComponentType();
+                if (genericType instanceof ParameterizedType) {
+                    return getFirstActualTypeArgument((ParameterizedType) genericType);
+                }
+            }
+            else {
+                return field.getType().getComponentType();
+            }
         }
         else {
             Type type = field.getGenericType();
             if (type instanceof ParameterizedType) {
-                ParameterizedType genericType = (ParameterizedType) field.getGenericType();
-                Type[] args = genericType.getActualTypeArguments();
-                if (args != null && args.length > 0 && args[0] != null) {
-                    Type nestedType = args[0];
-                    if (nestedType instanceof Class) {
-                        return (Class) nestedType;
-                    }
-                    else {
-                        Type[] nestedArgs = ((ParameterizedType) nestedType).getActualTypeArguments();
-                        if (nestedArgs != null && nestedArgs.length > 0 && nestedArgs[0] != null) {
-                            return (Class) nestedArgs[0];
-                        }
-                    }
+                ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
+                return getFirstActualTypeArgument(parameterizedType);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Obtains the first actual type argument from a parameterized type.
+     *
+     * @param type the parameterized type
+     * @return the first actual type argument
+     */
+    public static Class getFirstActualTypeArgument(ParameterizedType type) {
+        Type[] args = type.getActualTypeArguments();
+        if (args != null && args.length > 0 && args[0] != null) {
+            Type nestedType = args[0];
+            if (nestedType instanceof Class) {
+                return (Class) nestedType;
+            }
+            else {
+                Type[] nestedArgs = ((ParameterizedType) nestedType).getActualTypeArguments();
+                if (nestedArgs != null && nestedArgs.length > 0 && nestedArgs[0] != null) {
+                    return (Class) nestedArgs[0];
                 }
             }
         }
