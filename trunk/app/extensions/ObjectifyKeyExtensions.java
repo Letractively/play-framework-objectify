@@ -13,6 +13,10 @@ import play.templates.JavaExtensions;
  */
 public class ObjectifyKeyExtensions extends JavaExtensions {
 
+    public static String _key(Enum val) {
+        return val.name();
+    }
+
     public static String _key(Key<?> key) {
         return str(key);
     }

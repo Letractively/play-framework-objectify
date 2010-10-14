@@ -1,4 +1,4 @@
-%{ pName = 'object.' + _name + '.' + play.db.Model.Manager.factoryFor(_field.property.relationType).keyName() }%
+%{ pName = 'object.' + _name + (_field.property.relationType instanceof play.db.Model ? '.' + play.db.Model.Manager.factoryFor(_field.property.relationType).keyName() : '') }%
 
 #{field 'object.' + _name}
     <label for="${field.id}">
