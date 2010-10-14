@@ -28,3 +28,4 @@ Weather(Weather):
   safeToFly:        true
   note.text:        This is a note
   affectedFlights:  [Bob]
+  owner:            test_1@somewhere.com
