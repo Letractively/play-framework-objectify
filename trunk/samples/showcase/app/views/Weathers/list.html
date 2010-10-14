@@ -20,10 +20,10 @@
 	<div id="crudListTable">
 		#{crud.table fields:['id', 'date', 'city', 'description', 'temperature', 'safeToFly', 'note']}
       #{crud.custom 'date'}
-        ${object.date.format()}
+        ${object.date?.format()}
       #{/crud.custom}
       #{crud.custom 'city'}
-        ${object.city.label}
+        ${object.city?.label}
       #{/crud.custom}
       #{crud.custom 'note'}
         ${object.note?.text}
