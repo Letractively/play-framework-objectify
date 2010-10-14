@@ -2,7 +2,6 @@ import models.City;
 import models.Flight;
 import models.Passenger;
 import models.Weather;
-import org.apache.commons.lang.time.DateUtils;
 import org.junit.Before;
 import org.junit.Test;
 import play.modules.objectify.Datastore;
