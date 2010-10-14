@@ -593,21 +593,4 @@ public class ObjectifyService {
         }
     }
 
-    /**
-     * See {@link ObjectifyFactory#setDatastoreTimeoutRetryCount(int)}.
-     *
-     * @param value the value
-     */
-    public static void setDatastoreTimeoutRetryCount(int value) {
-        factory().setDatastoreTimeoutRetryCount(value);
-    }
-
-    /**
-     * See {@link ObjectifyFactory#getDatastoreTimeoutRetryCount()}.
-     *
-     * @return the value
-     */
-    public static int getDatastoreTimeoutRetryCount() {
-        return factory().getDatastoreTimeoutRetryCount();
-    }
 }

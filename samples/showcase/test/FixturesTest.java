@@ -36,7 +36,7 @@ public class FixturesTest extends UnitTest {
         assertEquals("Flight note text is not correct", "This is a note", flight.note.text);
         assertTrue("Flight note internal flag is not correct", flight.note.internal);
 
-        List<Passenger> passengers = Utils.asList(Datastore.query(Passenger.class).order("lastName").fetch());
+        List<Passenger> passengers = Utils.asList(Datastore.query(Passenger.class).order("lastName"));
         assertNotNull("Passengers is null", passengers);
         assertEquals("Passengers count is not correct", 2, passengers.size());
         assertEquals("Passenger 1 is not correct", "1", passengers.get(0).lastName);
