@@ -1,7 +1,7 @@
 #{extends 'main.html' /}
 
 #{if flight}
-#{set title:'Passengers travelling : ' + flight?.displayString/}
+#{set title:'Passengers travelling : ' + flight/}
 #{/if}
 
 #{if !flight}
@@ -23,7 +23,7 @@
         <td>${passenger.firstName}</td>
         <td>${passenger.lastName}</td>
         <td>
-            ${passenger.flight.fetch().displayString}<br/>
+            ${passenger.flight.fetch()}<br/>
         </td>
         <td class="edit"><a href="@{edit(passenger.flight.id, passenger.id)}">&{'edit'}</a></td>
         <td class="delete">#{delete @delete(passenger.flight.id, passenger.id), id:'delete_'+passenger.id}&{'delete'}#{/delete}</td>

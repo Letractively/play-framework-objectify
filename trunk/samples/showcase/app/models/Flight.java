@@ -4,8 +4,8 @@ import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Query;
 import controllers.Application;
 import play.data.validation.Required;
-import play.modules.objectify.Datastore;
-import play.modules.objectify.ObjectifyModel;
+import play.db.Model;
+import play.modules.objectify.*;
 
 import javax.persistence.Embedded;
 import javax.persistence.Id;
@@ -15,6 +15,7 @@ import java.util.List;
  * @author David Cheong
  * @since 3/04/2010
  */
+@ManagedBy(Flight.Loader.class)
 public class Flight extends ObjectifyModel<Flight> {
 
     @Id public Long id;
@@ -25,10 +26,6 @@ public class Flight extends ObjectifyModel<Flight> {
     public List<City> stopovers;
     @Embedded public Note note = new Note();
     public String owner;
-
-    public String getDisplayString() {
-        return origin.label + " - " + destination.label + " (" + pilot + ")";
-    }
 
     public static Flight findById(Long id) {
         return Datastore.find(Flight.class, id, true);
@@ -46,9 +43,7 @@ public class Flight extends ObjectifyModel<Flight> {
     }
 
     public Key<Flight> save() {
-        if (owner == null || owner.length() == 0) {
-            owner = Application.getUserEmail();
-        }
+        owner = Application.getUserEmail();
         return Datastore.put(this);
     }
 
@@ -78,7 +73,17 @@ public class Flight extends ObjectifyModel<Flight> {
 
     @Override
     public String toString() {
-        return pilot + " (" + (origin != null ? origin.label : "?") + " - " + (destination != null ? destination.label : "?") + ")";
+        return (origin != null ? origin.label : "?") + " - " + (destination != null ? destination.label : "?") + " (" + pilot + ")";
+    }
+
+    public class Loader extends ObjectifyModelLoader {
+
+        @Override
+        protected Query<? extends Model> prepareFetchQuery(String keywords) {
+            return super.prepareFetchQuery(keywords)
+                    .filter("owner", Application.getUserEmail());
+        }
+
     }
 
 }
