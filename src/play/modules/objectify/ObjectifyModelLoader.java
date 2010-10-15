@@ -72,15 +72,7 @@ public class ObjectifyModelLoader implements ObjectifyModel.Factory {
     }
 
     public List<? extends Model> fetch(String keywords, String orderBy, String orderDirection, int offset, int length) {
-        Query<? extends Model> query = prepareFetchQuery(keywords);
-        if (orderBy != null && orderBy.length() > 0) {
-            if ("DESC".equalsIgnoreCase(orderDirection)) {
-                query.order("-" + orderBy);
-            }
-            else {
-                query.order(orderBy);
-            }
-        }
+        Query<? extends Model> query = prepareFetchQuery(keywords, orderBy, orderDirection);
         query.offset(offset);
         query.limit(length);
         return Utils.asList(query);
@@ -91,13 +83,15 @@ public class ObjectifyModelLoader implements ObjectifyModel.Factory {
     }
 
     public Long count(String keywords) {
-        Query<? extends Model> query = prepareFetchQuery(keywords);
+        Query<? extends Model> query = prepareFetchQuery(keywords, null, null);
         return (long) query.countAll();
     }
 
-    protected Query<? extends Model> prepareFetchQuery(String keywords) {
+    protected Query<? extends Model> prepareFetchQuery(String keywords, String orderBy, String orderDirection) {
 
         Query<? extends Model> query = Datastore.query(modelClass);
+
+        String inequalityFieldName = null;
 
         if (keywords != null && keywords.length() > 0) {
 
@@ -147,7 +141,6 @@ public class ObjectifyModelLoader implements ObjectifyModel.Factory {
                 searchFieldValues.add(new SearchFieldValue(key, value));
             }
 
-            boolean hasInequalityFilter = false;
             for (SearchFieldValue searchFieldValue : searchFieldValues) {
                 String fieldName = searchFieldValue.name;
                 String fieldValue = searchFieldValue.value;
@@ -155,10 +148,10 @@ public class ObjectifyModelLoader implements ObjectifyModel.Factory {
                 if (field != null) {
                     Class<?> type = field.getType();
                     if (type.equals(String.class)) {
-                        if (!hasInequalityFilter) {
+                        if (inequalityFieldName == null) {
                             query.filter(fieldName + " >=", fieldValue);
                             query.filter(fieldName + " <", fieldValue + "\uFFFD");
-                            hasInequalityFilter = true;
+                            inequalityFieldName = fieldName;
                         }
                         else {
                             Logger.warn("Datastore only allows one inequality filter per query, search by '" + fieldName + "' is silently ignored");
@@ -194,6 +187,29 @@ public class ObjectifyModelLoader implements ObjectifyModel.Factory {
                 }
             }
 
+        }
+
+        if (inequalityFieldName != null) {
+            if ("DESC".equalsIgnoreCase(orderDirection)) {
+                query.order("-" + inequalityFieldName);
+            }
+            else {
+                query.order(inequalityFieldName);
+            }
+        }
+
+        if (orderBy != null && orderBy.length() > 0) {
+            if (!orderBy.equals(inequalityFieldName)) {
+                if ("DESC".equalsIgnoreCase(orderDirection)) {
+                    query.order("-" + orderBy);
+                }
+                else {
+                    query.order(orderBy);
+                }
+                if (inequalityFieldName != null) {
+                    Logger.warn("Sorting is by " + inequalityFieldName + " first, then " + orderBy + " (datastore limitation)");
+                }
+            }
         }
 
         return query;

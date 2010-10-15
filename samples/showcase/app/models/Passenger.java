@@ -76,8 +76,8 @@ public class Passenger extends ObjectifyModel<Passenger> {
     public class Loader extends ObjectifyModelLoader {
 
         @Override
-        protected Query<? extends Model> prepareFetchQuery(String keywords) {
-            return super.prepareFetchQuery(keywords)
+        protected Query<? extends Model> prepareFetchQuery(String keywords, String orderBy, String orderDirection) {
+            return super.prepareFetchQuery(keywords, orderBy, orderDirection)
                     .filter("owner", Application.getUserEmail());
         }
 
