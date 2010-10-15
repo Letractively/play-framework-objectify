@@ -102,4 +102,18 @@ public abstract class ObjectifyModel<T extends ObjectifyModel> implements Model 
         return getKeyStr();
     }
 
+    /**
+     * Extension of the standard {@link Model.Factory}.
+     */
+    public interface Factory extends Model.Factory {
+
+        /**
+         * Specifies the class to manage.
+         *
+         * @param modelClass the model class
+         */
+        void init(Class<? extends Model> modelClass);
+
+    }
+
 }
