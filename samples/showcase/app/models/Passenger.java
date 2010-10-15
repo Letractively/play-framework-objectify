@@ -6,8 +6,8 @@ import com.googlecode.objectify.Query;
 import com.googlecode.objectify.annotation.Parent;
 import controllers.Application;
 import play.data.validation.Required;
-import play.modules.objectify.Datastore;
-import play.modules.objectify.ObjectifyModel;
+import play.db.Model;
+import play.modules.objectify.*;
 
 import javax.persistence.Id;
 
@@ -15,6 +15,7 @@ import javax.persistence.Id;
  * @author David Cheong
  * @since 3/04/2010
  */
+@ManagedBy(Passenger.Loader.class)
 public class Passenger extends ObjectifyModel<Passenger> {
 
     @Id public Long id;
@@ -51,6 +52,11 @@ public class Passenger extends ObjectifyModel<Passenger> {
         return Datastore.put(this);
     }
 
+    @Override
+    public void _save() {
+        save();
+    }
+
     public static void deleteByFlightId(Long flightId) {
         QueryResultIterable<Key<Passenger>> passengers = Datastore.query(Passenger.class)
                 .ancestor(Datastore.key(Flight.class, flightId))
@@ -65,6 +71,22 @@ public class Passenger extends ObjectifyModel<Passenger> {
     @Override
     public String toString() {
         return firstName + " " + lastName;
+    }
+
+    public class Loader extends ObjectifyModelLoader {
+
+        @Override
+        protected Query<? extends Model> prepareFetchQuery(String keywords) {
+            return super.prepareFetchQuery(keywords)
+                    .filter("owner", Application.getUserEmail());
+        }
+
+        @Override
+        protected Query prepareListModelQuery(String fieldName, Class fieldType) {
+            return super.prepareListModelQuery(fieldName, fieldType)
+                    .filter("owner", Application.getUserEmail());
+        }
+
     }
 
 }

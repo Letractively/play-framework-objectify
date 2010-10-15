@@ -1,8 +1,12 @@
 package models;
 
 import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Query;
+import controllers.Application;
 import play.data.validation.Required;
+import play.modules.objectify.ManagedBy;
 import play.modules.objectify.ObjectifyModel;
+import play.modules.objectify.ObjectifyModelLoader;
 
 import javax.persistence.Embedded;
 import javax.persistence.GeneratedValue;
@@ -14,6 +18,7 @@ import java.util.List;
  * @author David Cheong
  * @since 09/10/2010
  */
+@ManagedBy(Weather.Loader.class)
 public class Weather extends ObjectifyModel<Weather> {
 
     @Id @GeneratedValue public Long id;
@@ -24,5 +29,14 @@ public class Weather extends ObjectifyModel<Weather> {
     public boolean safeToFly;
     @Embedded public Note note = new Note();
     public List<Key<Flight>> affectedFlights;
+
+    public class Loader extends ObjectifyModelLoader {
+
+        @Override
+        protected Query prepareListModelQuery(String fieldName, Class fieldType) {
+            return super.prepareListModelQuery(fieldName, fieldType)
+                    .filter("owner", Application.getUserEmail());
+        }
+    }
 
 }
