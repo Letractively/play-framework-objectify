@@ -20,6 +20,39 @@ import java.util.List;
  */
 public class Utils extends play.utils.Utils {
 
+    /**
+     * Obtains the field specified (supports dot notation).
+     *
+     * @param clazz     the class to start searching
+     * @param fieldName the field name
+     * @return the field
+     */
+    public static Field findField(Class clazz, String fieldName) {
+        String[] paths = fieldName.split("\\.");
+        int index = 0;
+        Class<?> tclazz = clazz;
+        while (!tclazz.equals(Object.class)) {
+            boolean goToSuperClass = true;
+            Field[] fields = tclazz.getDeclaredFields();
+            for (Field field : fields) {
+                if (field.getName().equals(paths[index])) {
+                    field.setAccessible(true);
+                    if (index == paths.length - 1) {
+                        return field;
+                    }
+                    else {
+                        index++;
+                        tclazz = field.getType();
+                        goToSuperClass = false;
+                    }
+                }
+            }
+            if (goToSuperClass) {
+                tclazz = tclazz.getSuperclass();
+            }
+        }
+        return null;
+    }
 
     /**
      * Converts a given {@link java.util.Collection} to a native Java array if mandated by the field type.

@@ -21,12 +21,12 @@ import java.util.*;
  * @author David Cheong
  * @since 10/10/2010
  */
-public class ObjectifyModelFactory implements Model.Factory {
+public class ObjectifyModelLoader implements ObjectifyModel.Factory {
 
-    protected Class<Model> clazz;
+    protected Class<? extends Model> modelClass;
 
-    public ObjectifyModelFactory(Class<Model> clazz) {
-        this.clazz = clazz;
+    public void init(Class<? extends Model> modelClass) {
+        this.modelClass = modelClass;
     }
 
     public String keyName() {
@@ -41,8 +41,8 @@ public class ObjectifyModelFactory implements Model.Factory {
         return ((ObjectifyModel) m).getKeyStr();
     }
 
-    Field keyField() {
-        Class c = clazz;
+    protected Field keyField() {
+        Class c = modelClass;
         try {
             while (!c.equals(Object.class)) {
                 for (Field field : c.getDeclaredFields()) {
@@ -55,9 +55,9 @@ public class ObjectifyModelFactory implements Model.Factory {
             }
         }
         catch (Exception e) {
-            throw new UnexpectedException("Error while determining the object @Id for an object of type " + clazz);
+            throw new UnexpectedException("Error while determining the object @Id for an object of type " + modelClass);
         }
-        throw new UnexpectedException("Cannot get the object @Id for an object of type " + clazz);
+        throw new UnexpectedException("Cannot get the object @Id for an object of type " + modelClass);
     }
 
     @SuppressWarnings({"unchecked"})
@@ -66,8 +66,13 @@ public class ObjectifyModelFactory implements Model.Factory {
         return (Model) Datastore.find(key, false);
     }
 
+    @SuppressWarnings({"unchecked"})
     public List<Model> fetch(int offset, int length, String orderBy, String orderDirection, List<String> properties, String keywords, String where) {
-        Query<Model> query = getSearchQuery(keywords, where);
+        return (List<Model>) fetch(keywords, orderBy, orderDirection, offset, length);
+    }
+
+    public List<? extends Model> fetch(String keywords, String orderBy, String orderDirection, int offset, int length) {
+        Query<? extends Model> query = prepareFetchQuery(keywords);
         if (orderBy != null && orderBy.length() > 0) {
             if ("DESC".equalsIgnoreCase(orderDirection)) {
                 query.order("-" + orderBy);
@@ -76,17 +81,26 @@ public class ObjectifyModelFactory implements Model.Factory {
                 query.order(orderBy);
             }
         }
+        query.offset(offset);
+        query.limit(length);
         return Utils.asList(query);
     }
 
     public Long count(List<String> properties, String keywords, String where) {
-        Query<? extends Model> query = getSearchQuery(keywords, where);
+        return count(keywords);
+    }
+
+    public Long count(String keywords) {
+        Query<? extends Model> query = prepareFetchQuery(keywords);
         return (long) query.countAll();
     }
 
-    protected Query<Model> getSearchQuery(String keywords, String where) {
-        Query<Model> query = Datastore.query(clazz);
+    protected Query<? extends Model> prepareFetchQuery(String keywords) {
+
+        Query<? extends Model> query = Datastore.query(modelClass);
+
         if (keywords != null && keywords.length() > 0) {
+
             String[] keyWordsAsArray = keywords.split(" ");
             List<SearchFieldValue> searchFieldValues = new ArrayList<SearchFieldValue>();
             String key = null;
@@ -132,11 +146,12 @@ public class ObjectifyModelFactory implements Model.Factory {
             if (key != null) {
                 searchFieldValues.add(new SearchFieldValue(key, value));
             }
+
             boolean hasInequalityFilter = false;
             for (SearchFieldValue searchFieldValue : searchFieldValues) {
                 String fieldName = searchFieldValue.name;
                 String fieldValue = searchFieldValue.value;
-                Field field = findField(fieldName);
+                Field field = Utils.findField(modelClass, fieldName);
                 if (field != null) {
                     Class<?> type = field.getType();
                     if (type.equals(String.class)) {
@@ -178,13 +193,45 @@ public class ObjectifyModelFactory implements Model.Factory {
                     }
                 }
             }
+
         }
-        if (where != null && where.length() > 0) {
-            // ignored - this is a legacy feature as per
-            // http://groups.google.com/group/play-framework/browse_thread/thread/2acd3843ebe35575
-            Logger.warn("'where' argument is legacy feature - it is not supported");
-        }
+
         return query;
+
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public List<Object> listChoices(String fieldName, Class fieldType) {
+        if (ObjectifyModel.class.isAssignableFrom(fieldType)) {
+            return listModel(fieldName, fieldType);
+        }
+        else if (fieldType.isEnum()) {
+            return listEnumValues(fieldName, fieldType);
+        }
+        else {
+            return listOther(fieldName, fieldType);
+        }
+    }
+
+    @SuppressWarnings({"unchecked"})
+    protected List<Object> listModel(String fieldName, Class fieldType) {
+        Query query = prepareListModelQuery(fieldName, fieldType);
+        return (List<Object>) Utils.asList(query);
+    }
+
+    @SuppressWarnings({"UnusedDeclaration", "unchecked"})
+    protected Query prepareListModelQuery(String fieldName, Class fieldType) {
+        return Datastore.query(fieldType);
+    }
+
+    @SuppressWarnings({"UnusedDeclaration"})
+    protected List<Object> listEnumValues(String fieldName, Class fieldType) {
+        return Arrays.asList(fieldType.getEnumConstants());
+    }
+
+    @SuppressWarnings({"UnusedDeclaration"})
+    protected List<Object> listOther(String fieldName, Class fieldType) {
+        return new ArrayList<Object>();
     }
 
     public void deleteAll() {
@@ -192,7 +239,7 @@ public class ObjectifyModelFactory implements Model.Factory {
         do {
             hasOne = false;
             Query<? extends Model> query = Datastore
-                    .query(clazz)
+                    .query(modelClass)
                     .limit(50);
             for (Model model : query) {
                 Datastore.delete(model);
@@ -201,37 +248,10 @@ public class ObjectifyModelFactory implements Model.Factory {
         } while (hasOne);
     }
 
-    protected Field findField(String fieldName) {
-        String[] paths = fieldName.split("\\.");
-        int index = 0;
-        Class<?> tclazz = clazz;
-        while (!tclazz.equals(Object.class)) {
-            boolean goToSuperClass = true;
-            Field[] fields = tclazz.getDeclaredFields();
-            for (Field field : fields) {
-                if (field.getName().equals(paths[index])) {
-                    field.setAccessible(true);
-                    if (index == paths.length - 1) {
-                        return field;
-                    }
-                    else {
-                        index++;
-                        tclazz = field.getType();
-                        goToSuperClass = false;
-                    }
-                }
-            }
-            if (goToSuperClass) {
-                tclazz = tclazz.getSuperclass();
-            }
-        }
-        return null;
-    }
-
     public List<Model.Property> listProperties() {
         List<Model.Property> properties = new ArrayList<Model.Property>();
         Set<Field> fields = new HashSet<Field>();
-        Class<?> tclazz = clazz;
+        Class<?> tclazz = modelClass;
         while (!tclazz.equals(Object.class)) {
             Collections.addAll(fields, tclazz.getDeclaredFields());
             tclazz = tclazz.getSuperclass();
@@ -261,13 +281,14 @@ public class ObjectifyModelFactory implements Model.Factory {
     protected Model.Property buildProperty(final Field field) {
 
         final Model.Property modelProperty = new Model.Property();
+        final String name = field.getName();
         final Class<?> type = field.getType();
 
         boolean many = Collection.class.isAssignableFrom(type) || type.isArray();
 
         modelProperty.type = type;
         modelProperty.field = field;
-        modelProperty.name = field.getName();
+        modelProperty.name = name;
 
         if (Model.class.isAssignableFrom(type)) {
             modelProperty.isRelation = true;
@@ -276,8 +297,7 @@ public class ObjectifyModelFactory implements Model.Factory {
             modelProperty.choices = new Model.Choices() {
                 @SuppressWarnings("unchecked")
                 public List<Object> list() {
-                    Query<?> query = Datastore.query(modelProperty.relationType);
-                    return (List<Object>) Utils.asList(query);
+                    return listChoices(modelProperty.name, modelProperty.relationType);
                 }
             };
         }
@@ -288,8 +308,7 @@ public class ObjectifyModelFactory implements Model.Factory {
             modelProperty.choices = new Model.Choices() {
                 @SuppressWarnings("unchecked")
                 public List<Object> list() {
-                    Query<?> query = Datastore.query(modelProperty.relationType);
-                    return (List<Object>) Utils.asList(query);
+                    return listChoices(modelProperty.name, modelProperty.relationType);
                 }
             };
         }
@@ -304,8 +323,7 @@ public class ObjectifyModelFactory implements Model.Factory {
                 modelProperty.choices = new Model.Choices() {
                     @SuppressWarnings("unchecked")
                     public List<Object> list() {
-                        Query<?> query = Datastore.query(modelProperty.relationType);
-                        return (List<Object>) Utils.asList(query);
+                        return listChoices(modelProperty.name, modelProperty.relationType);
                     }
                 };
             }
@@ -314,7 +332,7 @@ public class ObjectifyModelFactory implements Model.Factory {
                 modelProperty.choices = new Model.Choices() {
                     @SuppressWarnings("unchecked")
                     public List<Object> list() {
-                        return (List<Object>) Arrays.asList(rawType.getEnumConstants());
+                        return listChoices(modelProperty.name, modelProperty.relationType);
                     }
                 };
             }
@@ -329,7 +347,7 @@ public class ObjectifyModelFactory implements Model.Factory {
             modelProperty.choices = new Model.Choices() {
                 @SuppressWarnings({"unchecked", "RedundantCast"})
                 public List<Object> list() {
-                    return (List<Object>) Arrays.asList(type.getEnumConstants());
+                    return listChoices(modelProperty.name, type);
                 }
             };
         }

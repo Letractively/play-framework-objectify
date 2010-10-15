@@ -8,7 +8,6 @@ import play.modules.gae.GAEPlugin;
 import play.mvc.Scope;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -176,18 +175,27 @@ public class ObjectifyPlugin extends PlayPlugin {
     }
 
     /**
-     * Invoked when doing model retrieval/lookups. The model factory returned is {@link ObjectifyModelFactory}
+     * Invoked when doing model retrieval/lookups. The model factory returned is {@link ObjectifyModelLoader}
      * or a subclass identified by "objectify.modelFactory" in application.conf.
      *
      * @param modelClass the model class
      * @return the model factory
      */
+    @SuppressWarnings({"unchecked"})
     public Model.Factory modelFactory(Class<? extends Model> modelClass) {
         try {
-            String factoryClassName = Play.configuration.getProperty("objectify.modelFactory", ObjectifyModelFactory.class.getName());
-            Class<?> factoryClass = Play.classloader.loadClass(factoryClassName);
-            Constructor<?> constructor = factoryClass.getConstructors()[0];
-            return (Model.Factory) constructor.newInstance(modelClass);
+            Class<? extends ObjectifyModel.Factory> factoryClass;
+            ManagedBy managedBy = modelClass.getAnnotation(ManagedBy.class);
+            if (managedBy == null) {
+                String factoryClassName = Play.configuration.getProperty("objectify.modelFactory", ObjectifyModelLoader.class.getName());
+                factoryClass = (Class<? extends ObjectifyModel.Factory>) Play.classloader.loadClass(factoryClassName);
+            }
+            else {
+                factoryClass = managedBy.value();
+            }
+            ObjectifyModel.Factory factory = factoryClass.newInstance();
+            factory.init(modelClass);
+            return factory;
         }
         catch (Exception e) {
             throw new RuntimeException(e);
