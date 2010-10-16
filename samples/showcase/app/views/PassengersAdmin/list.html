@@ -17,7 +17,7 @@
   </div>
 
 	<div id="crudListTable">
-		#{crud.table fields:['id', 'firstName', 'lastName', 'flight']}
+		#{crud.table fields:['id', 'firstName', 'lastName', 'flight'], sort:['id', 'firstName', 'lastName']}
       #{crud.custom 'flight'}
         ${object.flight.fetch()}
       #{/crud.custom}
