@@ -11,7 +11,7 @@ Flight(Bob):
 Passenger(BobFirstPassenger):
   firstName:        Bob Passenger
   lastName:         1
-  flight:           Bob      
+  flight:           Bob
   owner:            test_1@somewhere.com
 
 Passenger(BobSecondPassenger):
@@ -27,5 +27,6 @@ Weather(Weather):
   temperature:      15
   safeToFly:        true
   note.text:        This is a note
+  note.internal:    true
   affectedFlights:  [Bob]
   owner:            test_1@somewhere.com
