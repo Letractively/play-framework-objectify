@@ -336,11 +336,11 @@ public class ObjectifyModelLoader implements ObjectifyModel.Factory {
         }
         else if (many) {
             modelProperty.isMultiple = true;
-            modelProperty.isRelation = true;
             modelProperty.isSearchable = false;
             final Class rawClass = Utils.getManyFieldRawClass(field);
             final Class rawType = Utils.getManyFieldRawType(field);
             if (Key.class.isAssignableFrom(rawClass)) {
+                modelProperty.isRelation = true;
                 modelProperty.relationType = rawType;
                 modelProperty.choices = new Model.Choices() {
                     @SuppressWarnings("unchecked")
@@ -350,6 +350,7 @@ public class ObjectifyModelLoader implements ObjectifyModel.Factory {
                 };
             }
             else if (rawType.isEnum()) {
+                modelProperty.isRelation = false;
                 modelProperty.relationType = rawType;
                 modelProperty.choices = new Model.Choices() {
                     @SuppressWarnings("unchecked")
@@ -359,6 +360,7 @@ public class ObjectifyModelLoader implements ObjectifyModel.Factory {
                 };
             }
             else {
+                modelProperty.isRelation = false;
                 modelProperty.relationType = rawType;
                 // crud api does not make this possible
                 throw new UnexpectedException("CRUD does not allow non-Key collections from being managed");
