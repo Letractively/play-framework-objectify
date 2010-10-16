@@ -42,6 +42,7 @@ public class ObjectifyFactory extends com.googlecode.objectify.ObjectifyFactory 
      * @param <T> the type
      * @return the loaded class
      */
+    @SuppressWarnings({"unchecked"})
     public static <T> Class<T> loadClass(String name) {
         try {
             return (Class<T>) Play.classloader.loadClass(name);

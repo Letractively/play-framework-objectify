@@ -6,6 +6,7 @@ import play.Logger;
 import play.db.Model;
 import play.exceptions.UnexpectedException;
 import play.libs.I18N;
+import play.mvc.Scope;
 
 import javax.persistence.Embedded;
 import javax.persistence.GeneratedValue;
@@ -207,7 +208,12 @@ public class ObjectifyModelLoader implements ObjectifyModel.Factory {
                     query.order(orderBy);
                 }
                 if (inequalityFieldName != null) {
-                    Logger.warn("Sorting is by " + inequalityFieldName + " first, then " + orderBy + " (datastore limitation)");
+                    String msg = "Sorting is by " + inequalityFieldName + " first, then " + orderBy + " (datastore limitation)";
+                    Scope.Flash flash = Scope.Flash.current();
+                    if (flash != null) {
+                        flash.error(msg);
+                    }
+                    Logger.warn(msg);
                 }
             }
         }

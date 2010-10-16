@@ -79,6 +79,14 @@ public class Flight extends ObjectifyModel<Flight> {
     public class Loader extends ObjectifyModelLoader {
 
         @Override
+        public List<Model> fetch(int offset, int length, String orderBy, String orderDirection, List<String> properties, String keywords, String where) {
+            if ("note".equals(orderBy)) {
+                orderBy = "note.text";
+            }
+            return super.fetch(offset, length, orderBy, orderDirection, properties, keywords, where);    //To change body of overridden methods use File | Settings | File Templates.
+        }
+
+        @Override
         protected Query<? extends Model> prepareFetchQuery(String keywords, String orderBy, String orderDirection) {
             return super.prepareFetchQuery(keywords, orderBy, orderDirection)
                     .filter("owner", Application.getUserEmail());
