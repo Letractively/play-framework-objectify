@@ -254,7 +254,7 @@ public class Utils extends play.utils.Utils {
      * @return the list
      */
     public static <T> List<T> asList(Query<T> query) {
-        return asList(query.fetch());
+        return asList(query.iterator());
     }
 
     /**
