@@ -4,6 +4,8 @@ import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Query;
 import controllers.Application;
 import play.data.validation.Required;
+import play.db.Model;
+import play.modules.objectify.Datastore;
 import play.modules.objectify.ManagedBy;
 import play.modules.objectify.ObjectifyModel;
 import play.modules.objectify.ObjectifyModelLoader;
@@ -23,14 +25,34 @@ public class Weather extends ObjectifyModel<Weather> {
 
     @Id @GeneratedValue public Long id;
     @Required public Date date;
-    @Required public String description;
     @Required public City city;
+    @Required public String description;
     @Required public int temperature;
     public boolean safeToFly;
     @Embedded public Note note = new Note();
     public List<Key<Flight>> affectedFlights;
+    public String owner;
+
+    public Key<Weather> save() {
+        owner = Application.getUserEmail();
+        return Datastore.put(this);
+    }
+
+    @Override
+    public void _save() {
+        save();
+    }
 
     public class Loader extends ObjectifyModelLoader {
+
+        @Override
+        protected Query<? extends Model> prepareFetchQuery(String keywords, String orderBy, String orderDirection) {
+            if ("note".equals(orderBy)) {
+                orderBy = "note.text";
+            }
+            return super.prepareFetchQuery(keywords, orderBy, orderDirection)
+                    .filter("owner", Application.getUserEmail());
+        }
 
         @Override
         protected Query prepareListModelQuery(String fieldName, Class fieldType) {
