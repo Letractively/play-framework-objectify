@@ -18,7 +18,7 @@
   </div>
 
 	<div id="crudListTable">
-		#{crud.table fields:['id', 'date', 'city', 'description', 'temperature', 'safeToFly', 'note']}
+		#{crud.table fields:['id', 'date', 'city', 'description', 'temperature', 'safeToFly', 'note'], sort:['id', 'date', 'city', 'description', 'temperature', 'safeToFly', 'note']}
       #{crud.custom 'date'}
         ${object.date?.format()}
       #{/crud.custom}
