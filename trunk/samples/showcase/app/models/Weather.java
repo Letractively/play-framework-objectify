@@ -9,6 +9,7 @@ import play.modules.objectify.Datastore;
 import play.modules.objectify.ManagedBy;
 import play.modules.objectify.ObjectifyModel;
 import play.modules.objectify.ObjectifyModelLoader;
+import play.mvc.Scope;
 
 import javax.persistence.Embedded;
 import javax.persistence.GeneratedValue;
@@ -49,6 +50,10 @@ public class Weather extends ObjectifyModel<Weather> {
         protected Query<? extends Model> prepareFetchQuery(String keywords, String orderBy, String orderDirection) {
             if ("note".equals(orderBy)) {
                 orderBy = "note.text";
+            }
+            if (keywords != null && keywords.length() > 0 && orderBy != null && orderBy.length() > 0) {
+                orderBy = null;
+                Scope.Flash.current().error("In this example, sorting is disabled when searching with a criteria");
             }
             return super.prepareFetchQuery(keywords, orderBy, orderDirection)
                     .filter("owner", Application.getUserEmail());

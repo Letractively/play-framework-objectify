@@ -8,6 +8,7 @@ import controllers.Application;
 import play.data.validation.Required;
 import play.db.Model;
 import play.modules.objectify.*;
+import play.mvc.Scope;
 
 import javax.persistence.Id;
 
@@ -77,6 +78,10 @@ public class Passenger extends ObjectifyModel<Passenger> {
 
         @Override
         protected Query<? extends Model> prepareFetchQuery(String keywords, String orderBy, String orderDirection) {
+            if (keywords != null && keywords.length() > 0 && orderBy != null && orderBy.length() > 0) {
+                orderBy = null;
+                Scope.Flash.current().error("In this example, sorting is disabled when searching with a criteria");
+            }
             return super.prepareFetchQuery(keywords, orderBy, orderDirection)
                     .filter("owner", Application.getUserEmail());
         }
