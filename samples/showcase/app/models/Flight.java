@@ -6,6 +6,7 @@ import controllers.Application;
 import play.data.validation.Required;
 import play.db.Model;
 import play.modules.objectify.*;
+import play.mvc.Scope;
 
 import javax.persistence.Embedded;
 import javax.persistence.Id;
@@ -82,6 +83,10 @@ public class Flight extends ObjectifyModel<Flight> {
         public List<Model> fetch(int offset, int length, String orderBy, String orderDirection, List<String> properties, String keywords, String where) {
             if ("note".equals(orderBy)) {
                 orderBy = "note.text";
+            }
+            if (keywords != null && keywords.length() > 0 && orderBy != null && orderBy.length() > 0) {
+                orderBy = null;
+                Scope.Flash.current().error("In this example, sorting is disabled when searching with a criteria");
             }
             return super.fetch(offset, length, orderBy, orderDirection, properties, keywords, where);    //To change body of overridden methods use File | Settings | File Templates.
         }
